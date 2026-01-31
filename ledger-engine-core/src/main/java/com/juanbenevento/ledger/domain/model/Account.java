@@ -19,23 +19,38 @@ public class Account {
     private BigDecimal accountingBalance;
     private BigDecimal availableBalance;
     private AccountStatus status;
+    private Long version;
 
     private Account(UUID id, String accountNumber, Currency currency) {
         this.id = id;
         this.accountNumber = accountNumber;
         this.currency = currency;
-
         this.accountingBalance = BigDecimal.ZERO.setScale(SCALE, ROUNDING);
         this.availableBalance = BigDecimal.ZERO.setScale(SCALE, ROUNDING);
         this.status = AccountStatus.ACTIVE;
+        this.version = 0L;
     }
 
-    // Factory
     public static Account create(UUID id, String accountNumber, Currency currency) {
         return new Account(id, accountNumber, currency);
     }
 
-    // === Domain Behavior ===
+    public static Account reconstitute(
+            UUID id,
+            String accountNumber,
+            Currency currency,
+            BigDecimal accountingBalance,
+            BigDecimal availableBalance,
+            AccountStatus status,
+            Long version
+    ) {
+        Account account = new Account(id, accountNumber, currency);
+        account.accountingBalance = accountingBalance;
+        account.availableBalance = availableBalance;
+        account.status = status;
+        account.version = version;
+        return account;
+    }
 
     public void debit(BigDecimal amount) {
         ensureIsActive();
@@ -57,8 +72,6 @@ public class Account {
         this.accountingBalance = this.accountingBalance.add(normalized);
     }
 
-    // === Guards & Helpers ===
-
     private void ensureIsActive() {
         if (this.status != AccountStatus.ACTIVE) {
             throw new AccountNotActiveException(this.status);
@@ -71,8 +84,6 @@ public class Account {
         }
         return amount.setScale(SCALE, ROUNDING);
     }
-
-    // === Getters ===
 
     public UUID getId() {
         return id;
@@ -96,5 +107,9 @@ public class Account {
 
     public AccountStatus getStatus() {
         return status;
+    }
+
+    public Long getVersion() {
+        return version;
     }
 }
