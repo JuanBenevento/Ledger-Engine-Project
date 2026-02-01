@@ -46,8 +46,8 @@ El siguiente diagrama representa los casos de uso principales del sistema y sus 
 - **Auditor («Human/System»)**: Consulta la trazabilidad inmutable para fines regulatorios.
 
 **Casos de Uso**
-- UC-01: Realizar Transferencia (Partida Doble)
-- UC-02: Crear / Provisionar Cuenta
+- UC-01: Crear / Provisionar Cuenta
+- UC-02: Realizar Transferencia (Partida Doble)
 - UC-03: Consultar Historial (Trazabilidad Inmutable)
 - UC-04: Consultar Balance Dual (Contable / Disponible)
 - UC-05: Bloquear / Activar Cuenta
