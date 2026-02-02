@@ -25,8 +25,8 @@ public class AccountTest {
         assertEquals(accountNumber, account.getAccountNumber());
         assertEquals(currency, account.getCurrency());
 
-        assertEquals("0.0000", account.getAvailableBalance().toPlainString());
-        assertEquals("0.0000", account.getAccountingBalance().toPlainString());
+        assertEquals("0.0000", account.getAvailableBalanceSnapshot().toPlainString());
+        assertEquals("0.0000", account.getAccountingBalanceSnapshot().toPlainString());
         assertEquals(AccountStatus.ACTIVE, account.getStatus());
     }
 
@@ -39,7 +39,7 @@ public class AccountTest {
                 Currency.of("USD")
         );
 
-        assertEquals("0.0000", account.getAvailableBalance().toPlainString());
+        assertEquals("0.0000", account.getAvailableBalanceSnapshot().toPlainString());
 
         BigDecimal amountToDebit = new BigDecimal("100.00");
 
@@ -58,16 +58,16 @@ public class AccountTest {
                 Currency.of("USD")
         );
 
-        assertEquals("0.0000", account.getAvailableBalance().toPlainString());
-        assertEquals("0.0000", account.getAccountingBalance().toPlainString());
+        assertEquals("0.0000", account.getAvailableBalanceSnapshot().toPlainString());
+        assertEquals("0.0000", account.getAccountingBalanceSnapshot().toPlainString());
         assertEquals(AccountStatus.ACTIVE, account.getStatus());
 
         BigDecimal amountToCredit = new BigDecimal("100.00");
 
         account.credit(amountToCredit);
 
-        assertEquals("100.0000", account.getAvailableBalance().toPlainString());
-        assertEquals("100.0000", account.getAccountingBalance().toPlainString());
+        assertEquals("100.0000", account.getAvailableBalanceSnapshot().toPlainString());
+        assertEquals("100.0000", account.getAccountingBalanceSnapshot().toPlainString());
     }
 
     @Test
@@ -79,23 +79,23 @@ public class AccountTest {
                 Currency.of("ARS")
         );
 
-        assertEquals("0.0000", account.getAvailableBalance().toPlainString());
-        assertEquals("0.0000", account.getAccountingBalance().toPlainString());
+        assertEquals("0.0000", account.getAvailableBalanceSnapshot().toPlainString());
+        assertEquals("0.0000", account.getAccountingBalanceSnapshot().toPlainString());
         assertEquals(AccountStatus.ACTIVE, account.getStatus());
 
         BigDecimal amountToCredit = new BigDecimal("100.00");
 
         account.credit(amountToCredit);
 
-        assertEquals("100.0000", account.getAvailableBalance().toPlainString());
-        assertEquals("100.0000", account.getAccountingBalance().toPlainString());
+        assertEquals("100.0000", account.getAvailableBalanceSnapshot().toPlainString());
+        assertEquals("100.0000", account.getAccountingBalanceSnapshot().toPlainString());
 
         BigDecimal amountToDebit = new BigDecimal("50.00");
 
         account.debit(amountToDebit);
 
-        assertEquals("50.0000", account.getAvailableBalance().toPlainString());
-        assertEquals("50.0000", account.getAccountingBalance().toPlainString());
+        assertEquals("50.0000", account.getAvailableBalanceSnapshot().toPlainString());
+        assertEquals("50.0000", account.getAccountingBalanceSnapshot().toPlainString());
     }
 
     @Test

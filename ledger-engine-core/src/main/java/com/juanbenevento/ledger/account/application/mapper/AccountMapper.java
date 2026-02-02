@@ -23,7 +23,7 @@ public class AccountMapper {
                 account.getId(),
                 account.getAccountNumber(),
                 account.getCurrency().toString(),
-                account.getAvailableBalance(),
+                account.getAvailableBalanceSnapshot(),
                 account.getStatus().name()
         );
     }

@@ -17,8 +17,8 @@ public class Account {
     private final String accountNumber;
     private final Currency currency;
 
-    private BigDecimal accountingBalance;
-    private BigDecimal availableBalance;
+    private BigDecimal accountingBalanceSnapshot;
+    private BigDecimal availableBalanceSnapshot;
     private AccountStatus status;
     private Long version;
 
@@ -26,8 +26,8 @@ public class Account {
         this.id = id;
         this.accountNumber = accountNumber;
         this.currency = currency;
-        this.accountingBalance = BigDecimal.ZERO.setScale(SCALE, ROUNDING);
-        this.availableBalance = BigDecimal.ZERO.setScale(SCALE, ROUNDING);
+        this.accountingBalanceSnapshot = BigDecimal.ZERO.setScale(SCALE, ROUNDING);
+        this.availableBalanceSnapshot = BigDecimal.ZERO.setScale(SCALE, ROUNDING);
         this.status = AccountStatus.ACTIVE;
         this.version = 0L;
     }
@@ -46,8 +46,8 @@ public class Account {
             Long version
     ) {
         Account account = new Account(id, accountNumber, currency);
-        account.accountingBalance = accountingBalance;
-        account.availableBalance = availableBalance;
+        account.accountingBalanceSnapshot = accountingBalance;
+        account.availableBalanceSnapshot = availableBalance;
         account.status = status;
         account.version = version;
         return account;
@@ -57,20 +57,20 @@ public class Account {
         ensureIsActive();
         BigDecimal normalized = validateAndNormalize(amount);
 
-        if (this.availableBalance.compareTo(normalized) < 0) {
+        if (this.availableBalanceSnapshot.compareTo(normalized) < 0) {
             throw new InsufficientFundsException();
         }
 
-        this.availableBalance = this.availableBalance.subtract(normalized);
-        this.accountingBalance = this.accountingBalance.subtract(normalized);
+        this.availableBalanceSnapshot = this.availableBalanceSnapshot.subtract(normalized);
+        this.accountingBalanceSnapshot = this.accountingBalanceSnapshot.subtract(normalized);
     }
 
     public void credit(BigDecimal amount) {
         ensureIsActive();
         BigDecimal normalized = validateAndNormalize(amount);
 
-        this.availableBalance = this.availableBalance.add(normalized);
-        this.accountingBalance = this.accountingBalance.add(normalized);
+        this.availableBalanceSnapshot = this.availableBalanceSnapshot.add(normalized);
+        this.accountingBalanceSnapshot = this.accountingBalanceSnapshot.add(normalized);
     }
 
     private void ensureIsActive() {
@@ -98,12 +98,12 @@ public class Account {
         return currency;
     }
 
-    public BigDecimal getAccountingBalance() {
-        return accountingBalance;
+    public BigDecimal getAccountingBalanceSnapshot() {
+        return accountingBalanceSnapshot;
     }
 
-    public BigDecimal getAvailableBalance() {
-        return availableBalance;
+    public BigDecimal getAvailableBalanceSnapshot() {
+        return availableBalanceSnapshot;
     }
 
     public AccountStatus getStatus() {
