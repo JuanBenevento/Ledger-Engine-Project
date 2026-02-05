@@ -1,5 +1,6 @@
 package com.juanbenevento.ledger.transaction.infrastructure.adapter.output.persistence;
 
+import com.juanbenevento.ledger.common.domain.model.Currency;
 import com.juanbenevento.ledger.transaction.domain.model.JournalEntry;
 import com.juanbenevento.ledger.transaction.domain.model.Transaction;
 import com.juanbenevento.ledger.transaction.domain.model.TransactionType;
@@ -12,13 +13,14 @@ import java.util.stream.Collectors;
 @Component
 class TransactionPersistenceMapper {
 
-    public TransactionEntity toEntity(Transaction domain) {
+    public TransactionEntity toEntity(Transaction domain, String createdBy) {
         TransactionEntity transactionEntity = TransactionEntity.builder()
                 .id(domain.getId())
                 .correlationId(domain.getCorrelationId())
                 .description(domain.getDescription())
                 .transactionType(domain.getType().name())
                 .createdAt(domain.getCreatedAt())
+                .createdBy(createdBy)
                 .isNew(true)
                 .build();
 
@@ -38,6 +40,7 @@ class TransactionPersistenceMapper {
                 .id(domainEntry.getId())
                 .accountId(domainEntry.getAccountId())
                 .amount(domainEntry.getAmount())
+                .currency(domainEntry.getCurrency().code().name())
                 .type(domainEntry.getType())
                 .build();
     }
@@ -62,6 +65,7 @@ class TransactionPersistenceMapper {
                 entity.getId(),
                 entity.getAccountId(),
                 entity.getAmount(),
+                Currency.of(entity.getCurrency()),
                 entity.getType()
         );
     }

@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 import java.util.UUID;
 
 @Component
-public class AccountMapper {
+public class AccountDtoMapper {
     public Account toDomain(UUID id, CreateAccountRequest request){
         return Account.create(
                 id,

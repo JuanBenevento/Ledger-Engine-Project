@@ -2,7 +2,7 @@ package com.juanbenevento.ledger.account.application.service;
 
 import com.juanbenevento.ledger.account.application.dto.CreateAccountRequest;
 import com.juanbenevento.ledger.account.application.dto.CreateAccountResponse;
-import com.juanbenevento.ledger.account.application.mapper.AccountMapper;
+import com.juanbenevento.ledger.account.application.mapper.AccountDtoMapper;
 import com.juanbenevento.ledger.account.application.port.in.CreateAccountUseCase;
 import com.juanbenevento.ledger.account.domain.exception.AccountAlreadyExistsException;
 import com.juanbenevento.ledger.account.domain.model.Account;
@@ -18,7 +18,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CreateAccountService implements CreateAccountUseCase {
     private final AccountRepository accountRepository;
-    private final AccountMapper mapper;
+    private final AccountDtoMapper mapper;
 
     @Override
     @Transactional

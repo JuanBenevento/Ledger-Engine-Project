@@ -7,7 +7,7 @@ import java.util.UUID;
 
 public interface AccountRepository {
     void save(Account account, String correlationId, String createdBySystem);
-    void update(Account account);
+    void update(Account account, String modifiedBy);
     boolean existsByAccountNumber(String accountNumber);
     Optional<Account> findById(UUID id);
     Optional<Account> findByCorrelationId(String correlationId);

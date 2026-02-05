@@ -23,18 +23,19 @@ public class AccountPersistenceMapper {
                 .build();
     }
 
-    public AccountEntity toEntityForUpdate(Account account, AccountEntity previousEntity) {
+    public AccountEntity toEntityForUpdate(Account domain, AccountEntity previousEntity, String modifiedBy) {
         return AccountEntity.builder()
-                .id(account.getId())
-                .accountingBalance(account.getAccountingBalanceSnapshot())
-                .availableBalance(account.getAvailableBalanceSnapshot())
-                .status(account.getStatus().name())
-                .version(account.getVersion())
+                .id(previousEntity.getId())
                 .accountNumber(previousEntity.getAccountNumber())
                 .currency(previousEntity.getCurrency())
                 .correlationId(previousEntity.getCorrelationId())
                 .createdBySystem(previousEntity.getCreatedBySystem())
                 .createdAt(previousEntity.getCreatedAt())
+                .accountingBalance(domain.getAccountingBalanceSnapshot())
+                .availableBalance(domain.getAvailableBalanceSnapshot())
+                .status(domain.getStatus().name())
+                .version(domain.getVersion())
+                .lastModifiedBy(modifiedBy)
                 .isNew(false)
                 .build();
     }

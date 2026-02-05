@@ -50,6 +50,9 @@ class AccountEntity implements Persistable<UUID> {
     @Column(updatable = false, nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "last_modified_by")
+    private String lastModifiedBy;
+
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 

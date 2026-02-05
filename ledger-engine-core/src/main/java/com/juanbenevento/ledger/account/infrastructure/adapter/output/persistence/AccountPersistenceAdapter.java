@@ -1,5 +1,6 @@
 package com.juanbenevento.ledger.account.infrastructure.adapter.output.persistence;
 
+import com.juanbenevento.ledger.account.domain.exception.AccountNotFoundException;
 import com.juanbenevento.ledger.account.domain.model.Account;
 import com.juanbenevento.ledger.account.application.port.output.AccountRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,11 +23,12 @@ class AccountPersistenceAdapter implements AccountRepository {
     }
 
     @Override
-    public void update(Account account) {
+    public void update(Account account, String modifiedBy) {
         AccountEntity existing = jpaRepository.findById(account.getId())
-                .orElseThrow(() -> new RuntimeException("Account not found for update"));
+                .orElseThrow(() -> new AccountNotFoundException(account.getId()));
 
-        AccountEntity entity = mapper.toEntityForUpdate(account, existing);
+        // Pasamos el modifiedBy al mapper
+        AccountEntity entity = mapper.toEntityForUpdate(account, existing, modifiedBy);
 
         jpaRepository.save(entity);
     }

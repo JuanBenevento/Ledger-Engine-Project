@@ -3,7 +3,7 @@ package com.juanbenevento.ledger.account.infrastructure.adapter.in.rest.controll
 import com.juanbenevento.ledger.account.application.dto.CreateAccountRequest;
 import com.juanbenevento.ledger.account.application.dto.CreateAccountResponse;
 import com.juanbenevento.ledger.account.application.port.in.CreateAccountUseCase;
-import com.juanbenevento.ledger.account.infrastructure.adapter.in.rest.dto.AccountRequest;
+import com.juanbenevento.ledger.account.infrastructure.adapter.in.rest.dto.WebAccountRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -39,7 +39,7 @@ public class AccountController {
             }
     )
     @PostMapping
-    public ResponseEntity<CreateAccountResponse> create(@Valid @RequestBody AccountRequest request) {
+    public ResponseEntity<CreateAccountResponse> create(@Valid @RequestBody WebAccountRequest request) {
         var applicationRequest = new CreateAccountRequest(
                 request.accountNumber(),
                 request.currency(),

@@ -53,29 +53,36 @@ public class Account {
         return account;
     }
 
-    public void debit(BigDecimal amount) {
-        ensureIsActive();
-        BigDecimal normalized = validateAndNormalize(amount);
+    public void withdraw(BigDecimal amount) {
+        ensureActive();
+        BigDecimal normalizedAmount = validateAndNormalize(amount);
 
-        if (this.availableBalanceSnapshot.compareTo(normalized) < 0) {
-            throw new InsufficientFundsException();
+        if (this.availableBalanceSnapshot.compareTo(normalizedAmount) < 0) {
+            throw new InsufficientFundsException(
+                    this.id,
+                    this.availableBalanceSnapshot,
+                    normalizedAmount
+            );
         }
 
-        this.availableBalanceSnapshot = this.availableBalanceSnapshot.subtract(normalized);
-        this.accountingBalanceSnapshot = this.accountingBalanceSnapshot.subtract(normalized);
+        this.availableBalanceSnapshot = this.availableBalanceSnapshot.subtract(normalizedAmount);
+        this.accountingBalanceSnapshot = this.accountingBalanceSnapshot.subtract(normalizedAmount);
     }
 
+
     public void credit(BigDecimal amount) {
-        ensureIsActive();
+        ensureActive();
         BigDecimal normalized = validateAndNormalize(amount);
 
         this.availableBalanceSnapshot = this.availableBalanceSnapshot.add(normalized);
         this.accountingBalanceSnapshot = this.accountingBalanceSnapshot.add(normalized);
     }
 
-    private void ensureIsActive() {
+    private void ensureActive() {
         if (this.status != AccountStatus.ACTIVE) {
-            throw new AccountNotActiveException(this.status);
+            throw new AccountNotActiveException(
+                    this.id,
+                    this.status);
         }
     }
 

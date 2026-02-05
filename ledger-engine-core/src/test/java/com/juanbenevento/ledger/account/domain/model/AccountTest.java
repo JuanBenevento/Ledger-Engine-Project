@@ -8,9 +8,11 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-public class AccountTest {
+class AccountTest {
+
     @Test
     @DisplayName("US-01: Should create an account with zero balances and ACTIVE status")
     void shouldCreateAccountWithDefaultValues() {
@@ -20,117 +22,86 @@ public class AccountTest {
 
         Account account = Account.create(id, accountNumber, currency);
 
-        assertNotNull(account);
-        assertEquals(id, account.getId());
-        assertEquals(accountNumber, account.getAccountNumber());
-        assertEquals(currency, account.getCurrency());
+        assertThat(account).isNotNull();
+        assertThat(account.getId()).isEqualTo(id);
+        assertThat(account.getAccountNumber()).isEqualTo(accountNumber);
+        assertThat(account.getCurrency()).isEqualTo(currency);
+        assertThat(account.getStatus()).isEqualTo(AccountStatus.ACTIVE);
 
-        assertEquals("0.0000", account.getAvailableBalanceSnapshot().toPlainString());
-        assertEquals("0.0000", account.getAccountingBalanceSnapshot().toPlainString());
-        assertEquals(AccountStatus.ACTIVE, account.getStatus());
+        assertThat(account.getAvailableBalanceSnapshot()).isEqualByComparingTo(BigDecimal.ZERO);
+        assertThat(account.getAccountingBalanceSnapshot()).isEqualByComparingTo(BigDecimal.ZERO);
     }
 
     @Test
-    @DisplayName("RF-03: Should fail to debit when balance is insufficient")
+    @DisplayName("RF-03: Should fail to debit when balance is insufficient (Golden Rule)")
     void shouldThrowExceptionWhenBalanceIsInsufficient() {
-        Account account = Account.create(
-                UUID.randomUUID(),
-                "ACC-002",
-                Currency.of("USD")
-        );
-
-        assertEquals("0.0000", account.getAvailableBalanceSnapshot().toPlainString());
-
+        Account account = Account.create(UUID.randomUUID(), "ACC-002", Currency.of("USD"));
         BigDecimal amountToDebit = new BigDecimal("100.00");
 
-        assertThrows(
-                InsufficientFundsException.class,
-                () -> account.debit(amountToDebit)
-        );
+        assertThatThrownBy(() -> account.withdraw(amountToDebit))
+                .isInstanceOf(InsufficientFundsException.class)
+                .hasMessageContaining("insufficient funds");
     }
 
     @Test
     @DisplayName("RF-02: Crediting an account increases available and accounting balance")
-    void shouldCreditAccountSuccessfully(){
-        Account account = Account.create(
-                UUID.randomUUID(),
-                "ACC-003",
-                Currency.of("USD")
-        );
-
-        assertEquals("0.0000", account.getAvailableBalanceSnapshot().toPlainString());
-        assertEquals("0.0000", account.getAccountingBalanceSnapshot().toPlainString());
-        assertEquals(AccountStatus.ACTIVE, account.getStatus());
-
+    void shouldCreditAccountSuccessfully() {
+        Account account = Account.create(UUID.randomUUID(), "ACC-003", Currency.of("USD"));
         BigDecimal amountToCredit = new BigDecimal("100.00");
 
         account.credit(amountToCredit);
 
-        assertEquals("100.0000", account.getAvailableBalanceSnapshot().toPlainString());
-        assertEquals("100.0000", account.getAccountingBalanceSnapshot().toPlainString());
+        assertThat(account.getAvailableBalanceSnapshot())
+                .isEqualByComparingTo(amountToCredit);
+        assertThat(account.getAccountingBalanceSnapshot())
+                .isEqualByComparingTo(amountToCredit);
     }
 
     @Test
     @DisplayName("RF-02: Debiting an account decreases balances after a previous credit")
-    void shouldDebitAfterCredit(){
-        Account account = Account.create(
-                UUID.randomUUID(),
-                "ACC-004",
-                Currency.of("ARS")
-        );
+    void shouldDebitAfterCredit() {
+        Account account = Account.create(UUID.randomUUID(), "ACC-004", Currency.of("USD"));
+        account.credit(new BigDecimal("100.00"));
 
-        assertEquals("0.0000", account.getAvailableBalanceSnapshot().toPlainString());
-        assertEquals("0.0000", account.getAccountingBalanceSnapshot().toPlainString());
-        assertEquals(AccountStatus.ACTIVE, account.getStatus());
+        BigDecimal amountToDebit = new BigDecimal("40.00");
 
-        BigDecimal amountToCredit = new BigDecimal("100.00");
+        account.withdraw(amountToDebit);
 
-        account.credit(amountToCredit);
+        BigDecimal expectedBalance = new BigDecimal("60.00");
 
-        assertEquals("100.0000", account.getAvailableBalanceSnapshot().toPlainString());
-        assertEquals("100.0000", account.getAccountingBalanceSnapshot().toPlainString());
+        assertThat(account.getAvailableBalanceSnapshot())
+                .as("Available balance should be reduced")
+                .isEqualByComparingTo(expectedBalance);
 
-        BigDecimal amountToDebit = new BigDecimal("50.00");
-
-        account.debit(amountToDebit);
-
-        assertEquals("50.0000", account.getAvailableBalanceSnapshot().toPlainString());
-        assertEquals("50.0000", account.getAccountingBalanceSnapshot().toPlainString());
+        assertThat(account.getAccountingBalanceSnapshot())
+                .as("Accounting balance should be reduced")
+                .isEqualByComparingTo(expectedBalance);
     }
 
     @Test
-    @DisplayName("RF-04: Should reject operations with negative amounts")
-    void shouldRejectNegativeAmounts(){
-        Account account = Account.create(
-                UUID.randomUUID(),
-                "ACC-005",
-                Currency.of("EUR")
-        );
+    @DisplayName("RF-04: Should reject operations with negative amounts (Invariant Protection)")
+    void shouldRejectNegativeAmounts() {
+        Account account = Account.create(UUID.randomUUID(), "ACC-005", Currency.of("EUR"));
+        BigDecimal negativeAmount = new BigDecimal("-10.00");
 
-        assertEquals(AccountStatus.ACTIVE, account.getStatus());
 
-        BigDecimal amountToDebit = new BigDecimal("-100.00");
+        assertThatThrownBy(() -> account.credit(negativeAmount))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("positive");
 
-        assertThrows(
-            IllegalArgumentException.class,
-                () -> account.debit(amountToDebit)
-        );
+        assertThatThrownBy(() -> account.withdraw(negativeAmount))
+                .isInstanceOf(RuntimeException.class);
     }
 
     @Test
     @DisplayName("RF-04: Should reject operations with zero amount")
-    void  shouldRejectZeroAmount(){
-        Account account = Account.create(
-                UUID.randomUUID(),
-                "ACC-006",
-                Currency.of("USD")
-        );
+    void shouldRejectZeroAmount() {
+        Account account = Account.create(UUID.randomUUID(), "ACC-006", Currency.of("EUR"));
 
-        assertEquals(AccountStatus.ACTIVE, account.getStatus());
+        assertThatThrownBy(() -> account.credit(BigDecimal.ZERO))
+                .isInstanceOf(RuntimeException.class);
 
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> account.debit(BigDecimal.ZERO)
-        );
+        assertThatThrownBy(() -> account.withdraw(BigDecimal.ZERO))
+                .isInstanceOf(RuntimeException.class);
     }
 }

@@ -37,14 +37,17 @@ class TransactionEntity implements Persistable<UUID> {
     @Builder.Default
     private List<JournalEntryEntity> entries = new ArrayList<>();
 
+    @Column(nullable = false, updatable = false)
+    private String createdBy;
+
     @Transient
     @Builder.Default
     @Setter(AccessLevel.NONE)
-    private boolean isNew = true; // Por defecto true, ya que Transaction siempre es nueva al persistir
+    private boolean isNew = true;
 
     @Override
     public boolean isNew() {
-        return isNew; // Hibernate confiará en esto y hará INSERT directo [5]
+        return isNew;
     }
 
     @PostLoad
