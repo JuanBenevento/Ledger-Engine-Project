@@ -141,4 +141,5 @@ Este proyecto es una implementación práctica de conceptos académicos y patron
 ## 👨‍💻 Autor
 **Juan Manuel Benevento** Backend Developer (Java).
 
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](www.linkedin.com/in/juan-manuel-benevento-1870b5216)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/juan-manuel-benevento-1870b5216/)
+
