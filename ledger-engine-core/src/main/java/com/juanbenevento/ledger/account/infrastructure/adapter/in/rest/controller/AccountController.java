@@ -1,8 +1,10 @@
 package com.juanbenevento.ledger.account.infrastructure.adapter.in.rest.controller;
 
+import com.juanbenevento.ledger.account.application.dto.AccountStatementResponse;
 import com.juanbenevento.ledger.account.application.dto.CreateAccountRequest;
 import com.juanbenevento.ledger.account.application.dto.CreateAccountResponse;
 import com.juanbenevento.ledger.account.application.port.in.CreateAccountUseCase;
+import com.juanbenevento.ledger.account.application.port.in.GetAccountHistoryUseCase;
 import com.juanbenevento.ledger.account.infrastructure.adapter.in.rest.dto.WebAccountRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -13,10 +15,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/accounts")
@@ -24,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Accounts", description = "Endpoints for managing financial accounts")
 public class AccountController {
     private final CreateAccountUseCase createAccountUseCase;
+    private final GetAccountHistoryUseCase getAccountHistoryUseCase;
 
     @Operation(
             summary = "Create a new financial account",
@@ -49,5 +52,34 @@ public class AccountController {
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(createAccountUseCase.execute(applicationRequest));
+    }
+
+    @Operation(
+            summary = "Retrieve account transaction history (Ledger Statement)",
+            description = "Returns the chronological list of movements with calculated running balance. " +
+                    "Ensures deterministic ordering even for high-frequency transactions.",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "History retrieved successfully. Returns empty list if no movements exist.",
+                            content = @Content(schema = @Schema(implementation = AccountStatementResponse.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Account not found",
+                            content = @Content(schema = @Schema(hidden = true))
+                    ),
+                    @ApiResponse(
+                            responseCode = "500",
+                            description = "Integrity Violation: Ledger mismatch detected (Critical Error)",
+                            content = @Content(schema = @Schema(hidden = true))
+                    )
+            }
+    )
+    @GetMapping("/{accountId}/history")
+    public ResponseEntity<List<AccountStatementResponse>> getHistory(@PathVariable UUID accountId) {
+        List<AccountStatementResponse> history = getAccountHistoryUseCase.execute(accountId);
+
+        return ResponseEntity.ok(history);
     }
 }

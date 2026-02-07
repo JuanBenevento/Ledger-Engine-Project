@@ -8,5 +8,4 @@ import java.util.UUID;
 @Repository
 public interface TransactionJpaRepository extends JpaRepository<TransactionEntity, UUID> {
     boolean existsByCorrelationId(String correlationId);
-
 }

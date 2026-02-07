@@ -78,6 +78,20 @@ public class Account {
         this.accountingBalanceSnapshot = this.accountingBalanceSnapshot.add(normalized);
     }
 
+    public void freeze(String reason) {
+        if (this.status == AccountStatus.BLOCKED) {
+            return;
+        }
+        this.status = AccountStatus.BLOCKED;
+    }
+
+    public void activate() {
+        if (this.status == AccountStatus.ACTIVE) {
+            return;
+        }
+        this.status = AccountStatus.ACTIVE;
+    }
+
     private void ensureActive() {
         if (this.status != AccountStatus.ACTIVE) {
             throw new AccountNotActiveException(

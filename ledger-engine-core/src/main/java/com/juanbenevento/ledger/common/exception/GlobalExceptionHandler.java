@@ -6,6 +6,7 @@ import com.juanbenevento.ledger.account.domain.exception.AccountNotActiveExcepti
 import com.juanbenevento.ledger.account.domain.exception.AccountNotFoundException;
 import com.juanbenevento.ledger.common.domain.exception.DomainException;
 import com.juanbenevento.ledger.common.domain.exception.InsufficientFundsException;
+import com.juanbenevento.ledger.common.domain.exception.LedgerIntegrityException;
 import com.juanbenevento.ledger.transaction.domain.exception.TransactionAlreadyProcessedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,6 +58,18 @@ public class GlobalExceptionHandler {
             case TransactionAlreadyProcessedException tape -> {
                 status = HttpStatus.CONFLICT;
                 details = Map.of("correlationId", tape.getCorrelationId());
+            }
+            case LedgerIntegrityException lie -> {
+                status = HttpStatus.INTERNAL_SERVER_ERROR;
+
+                log.error("DATA CORRUPTION DETECTED");
+                log.error("Account: {}, Expected: {}, Found Snapshot: {}",
+                        lie.getAccountId(), lie.getCalculateBalance(), lie.getSnapshotBalance());
+
+                details = Map.of(
+                        "accountId", lie.getAccountId(),
+                        "errorType", "LEDGER_SNAPSHOT_MISMATCH"
+                );
             }
             default -> {
                 log.debug("Generic domain exception caught: {}", ex.getClass().getSimpleName());
