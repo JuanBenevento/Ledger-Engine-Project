@@ -16,7 +16,7 @@ public class AccountPersistenceMapper {
                 .accountingBalance(account.getAccountingBalanceSnapshot())
                 .availableBalance(account.getAvailableBalanceSnapshot())
                 .status(account.getStatus().name())
-                .version(0L)
+                .version(null)
                 .correlationId(correlationId)
                 .createdBySystem(createdBySystem)
                 .isNew(true)
