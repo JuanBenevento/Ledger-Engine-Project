@@ -40,6 +40,38 @@ El sistema está dividido en capas concéntricas para proteger las reglas de neg
 ### 3. Precisión Numérica
 Uso exclusivo de `BigDecimal` con escala fija (4 decimales) y modos de redondeo `HALF_EVEN` (Banker's Rounding) para evitar errores de punto flotante típicos de los tipos `double` o `float`.
 
+C4Component
+
+    title Diagrama de Componentes (Nivel 3) - Ledger Engine Core
+
+    ContainerDb(db, "PostgreSQL Database", "Relational Database Schema", "Almacena Tablas: accounts, transactions, journal_entries")
+
+    Container_Boundary(api, "Ledger Engine Application") {
+        
+        Component(ctrl, "Web Adapter", "REST Controller", "Recibe HTTP, valida JSON y llama a Input Ports")
+        
+        Component_Boundary(app_layer, "Application Layer") {
+            Component(in_port, "Input Port", "Interface (Use Case)", "Ej: DepositUseCase, TransferUseCase")
+            Component(service, "Service Implementation", "Spring Service", "Implementa lógica de flujo, orquesta transacciones")
+            Component(out_port, "Output Port", "Interface (Repository)", "Ej: AccountRepository, JournalEntryRepository")
+        }
+
+        Component_Boundary(domain_layer, "Domain Layer") {
+            Component(model, "Domain Model", "Aggregate / Entity", "Ej: Account, Transaction. Contiene lógica de negocio pura")
+        }
+
+        Component_Boundary(infra_layer, "Infrastructure Layer") {
+            Component(adapter, "Persistence Adapter", "JPA Repository / Mapper", "Implementa Output Ports y traduce a Entidades JPA")
+        }
+    }
+
+    Rel(ctrl, in_port, "Usa", "Llama a")
+    Rel(service, in_port, "Implementa")
+    Rel(service, model, "Orquesta", "Usa métodos de negocio")
+    Rel(service, out_port, "Usa", "Llama a interfaz")
+    Rel(adapter, out_port, "Implementa")
+    Rel(adapter, db, "Lee/Escribe", "JDBC/SQL")
+    
 ---
 
 ## 🛠️ Stack Tecnológico
@@ -142,4 +174,5 @@ Este proyecto es una implementación práctica de conceptos académicos y patron
 **Juan Manuel Benevento** Backend Developer (Java).
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/juan-manuel-benevento-1870b5216/)
+
 
