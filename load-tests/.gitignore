@@ -1,0 +1,16 @@
+# k6 test results
+*.json
+*.html
+
+# Environment files
+.env
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db

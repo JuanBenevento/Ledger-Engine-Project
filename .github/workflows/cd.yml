@@ -1,0 +1,121 @@
+name: CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+    types: [closed]
+
+env:
+  JAVA_VERSION: '21'
+  JAVA_DISTRIBUTION: 'corretto'
+
+jobs:
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop' && github.event.pull_request.merged == true
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          
+      - name: Build application
+        run: |
+          ./mvnw clean package -f pom.xml -DskipTests
+          
+      - name: Build Docker image
+        run: |
+          docker build -t ledger-engine:staging-${{ github.sha }} .
+          
+      - name: Deploy to staging environment
+        run: |
+          echo "Deploying to staging environment..."
+          echo "Image: ledger-engine:staging-${{ github.sha }}"
+          # Add your deployment commands here
+          # Examples:
+          # - kubectl set image deployment/ledger-engine ledger-engine=ledger-engine:staging-${{ github.sha }}
+          # - helm upgrade ledger-engine ./helm/ledger-engine --set image.tag=staging-${{ github.sha }}
+          # - aws ecs update-service --cluster staging --service ledger-engine --force-new-deployment
+          
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests against staging..."
+          # Add your smoke test commands here
+          # Examples:
+          # - curl -f https://staging.example.com/actuator/health
+          # - k6 run smoke-tests/smoke-test.js
+          
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event.pull_request.merged == true
+    environment: production
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          
+      - name: Build application
+        run: |
+          ./mvnw clean package -f pom.xml -DskipTests
+          
+      - name: Build Docker image
+        run: |
+          docker build -t ledger-engine:${{ github.sha }} .
+          docker tag ledger-engine:${{ github.sha }} ledger-engine:latest
+          
+      - name: Deploy to production environment
+        run: |
+          echo "Deploying to production environment..."
+          echo "Image: ledger-engine:${{ github.sha }}"
+          # Add your deployment commands here
+          # Examples:
+          # - kubectl set image deployment/ledger-engine ledger-engine=ledger-engine:${{ github.sha }}
+          # - helm upgrade ledger-engine ./helm/ledger-engine --set image.tag=${{ github.sha }}
+          # - aws ecs update-service --cluster production --service ledger-engine --force-new-deployment
+          
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests against production..."
+          # Add your smoke test commands here
+          
+      - name: Notify deployment
+        if: success()
+        run: |
+          echo "Deployment successful!"
+          # Add notification commands here
+          # Examples:
+          # - curl -X POST https://hooks.slack.com/services/xxx -d '{"text":"Deployed to production"}'
+          # - aws sns publish --topic-arn arn:aws:sns:xxx --message "Deployed to production"
+          
+  rollback:
+    name: Rollback
+    runs-on: ubuntu-latest
+    if: failure()
+    needs: [deploy-staging, deploy-production]
+    
+    steps:
+      - name: Rollback deployment
+        run: |
+          echo "Rolling back deployment..."
+          # Add rollback commands here
+          # Examples:
+          # - kubectl rollout undo deployment/ledger-engine
+          # - helm rollback ledger-engine
+          
+      - name: Notify rollback
+        run: |
+          echo "Rollback completed!"
+          # Add notification commands here
