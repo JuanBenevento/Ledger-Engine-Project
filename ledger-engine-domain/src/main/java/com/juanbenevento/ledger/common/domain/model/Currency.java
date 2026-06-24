@@ -35,6 +35,10 @@ public record Currency(Code code) {
         USD,
         EUR,
         CLP,
-        JPY
+        JPY,
+        COP,
+        MXN,
+        BRL,
+        PEN
     }
 }
