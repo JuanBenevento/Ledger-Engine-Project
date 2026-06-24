@@ -2,6 +2,7 @@ package com.juanbenevento.ledger.topup.infrastructure.adapter.in.rest.controller
 
 import com.juanbenevento.ledger.topup.application.dto.TopUpResponse;
 import com.juanbenevento.ledger.topup.application.port.input.CardTopUpUseCase;
+import com.juanbenevento.ledger.topup.application.port.input.CashTopUpUseCase;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,9 @@ class TopUpControllerTest {
 
     @MockitoBean
     private CardTopUpUseCase cardTopUpUseCase;
+
+    @MockitoBean
+    private CashTopUpUseCase cashTopUpUseCase;
 
     @Test
     @DisplayName("US-11: POST /api/v1/wallets/{id}/topup should return 201 with top-up data")
@@ -84,5 +88,46 @@ class TopUpControllerTest {
                                 }
                                 """))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("US-13: POST /api/v1/wallets/{id}/topup/cash should return 201 with reference code")
+    void shouldInitiateCashTopUp() throws Exception {
+        UUID walletId = UUID.randomUUID();
+        TopUpResponse response = new TopUpResponse(
+                UUID.randomUUID(), walletId, new BigDecimal("50000.00"),
+                "COP", "CASH", "PENDING", "ABCD1234",
+                LocalDateTime.now(), null);
+
+        given(cashTopUpUseCase.initiate(any())).willReturn(response);
+
+        mockMvc.perform(post("/api/v1/wallets/{walletId}/topup/cash", walletId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "amount": 50000.00,
+                                    "currency": "COP"
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.reference_code").value("ABCD1234"))
+                .andExpect(jsonPath("$.status").value("PENDING"));
+    }
+
+    @Test
+    @DisplayName("US-13: POST /api/v1/topups/{id}/confirm should return 200 for confirmed top-up")
+    void shouldConfirmCashTopUp() throws Exception {
+        UUID topUpId = UUID.randomUUID();
+        TopUpResponse response = new TopUpResponse(
+                topUpId, UUID.randomUUID(), new BigDecimal("50000.00"),
+                "COP", "CASH", "COMPLETED", "ABCD1234",
+                LocalDateTime.now(), LocalDateTime.now());
+
+        given(cashTopUpUseCase.confirm(topUpId)).willReturn(response);
+
+        mockMvc.perform(post("/api/v1/topups/{topUpId}/confirm", topUpId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("COMPLETED"));
     }
 }
