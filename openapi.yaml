@@ -1,0 +1,942 @@
+openapi: 3.0.3
+info:
+  title: Ledger Engine Virtual Wallet API
+  description: |
+    High-performance virtual wallet platform with P2P transfers, QR payments,
+    bill payments, top-ups, and real-time notifications.
+    Built with Hexagonal Architecture, DDD principles, and double-entry bookkeeping.
+  version: 1.0.0
+  contact:
+    name: Juan Manuel Benevento
+    url: https://github.com/JuanBenevento
+    email: juanmanuelbenevento@gmail.com
+  license:
+    name: MIT License
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Local development
+  - url: https://api.staging.ledger-engine.com
+    description: Staging
+
+tags:
+  - name: Accounts
+    description: Account provisioning and lifecycle management
+  - name: Account Management
+    description: Account freeze, activate, and close operations
+  - name: Transfers
+    description: Double-entry book-keeping transfer operations
+  - name: Cash Operations
+    description: Direct cash-in deposit operations
+  - name: Wallets
+    description: Virtual wallet management and balance queries
+  - name: P2P Transfers
+    description: Peer-to-peer money transfers between users
+  - name: TopUps
+    description: Wallet top-up via card, PSE, or cash
+  - name: Webhooks
+    description: Payment provider webhook callbacks
+  - name: QR Codes
+    description: QR code generation and payment collection
+  - name: Bill Payments
+    description: Bill payment to registered utility and service billers
+  - name: Notifications
+    description: In-app notification inbox and real-time push
+  - name: KYC
+    description: Know Your Customer verification workflow
+  - name: Authentication
+    description: User registration and JWT authentication
+
+paths:
+  /api/v1/accounts:
+    post:
+      tags: [Accounts]
+      summary: Create a new financial account
+      description: Provisions a new account with zero balance. Supports idempotency via correlationId.
+      operationId: createAccount
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebAccountRequest'
+      responses:
+        '201':
+          description: Account created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateAccountResponse'
+        '400':
+          description: Invalid input data
+        '409':
+          description: Account number already exists
+
+  /api/v1/accounts/{accountId}/history:
+    get:
+      tags: [Accounts]
+      summary: Retrieve account transaction history
+      description: Returns chronological list of movements with calculated running balance.
+      operationId: getAccountHistory
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: History retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccountStatementResponse'
+        '404':
+          description: Account not found
+
+  /api/v1/accounts/{id}/status:
+    patch:
+      tags: [Account Management]
+      summary: Change account operational status
+      description: Performs state transition (FREEZE/ACTIVATE) on the target account.
+      operationId: changeAccountStatus
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                  enum: [FREEZE, ACTIVATE]
+                reason:
+                  type: string
+      responses:
+        '204':
+          description: Status updated successfully
+        '400':
+          description: Invalid action
+        '404':
+          description: Account not found
+
+  /api/v1/transfers:
+    post:
+      tags: [Transfers]
+      summary: Execute a transfer between accounts
+      description: Executes a double-entry bookkeeping transfer between source and target accounts.
+      operationId: executeTransfer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferRequest'
+      responses:
+        '201':
+          description: Transfer completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponse'
+        '400':
+          description: Invalid input data
+        '422':
+          description: Insufficient funds
+
+  /api/v1/deposits:
+    post:
+      tags: [Cash Operations]
+      summary: Deposit cash into an account
+      description: Direct cash-in operation credited to the target account.
+      operationId: depositCash
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DepositRequest'
+      responses:
+        '201':
+          description: Deposit completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponse'
+        '400':
+          description: Invalid input data
+
+  /api/v1/wallets:
+    post:
+      tags: [Wallets]
+      summary: Create a new wallet
+      description: Creates a new virtual wallet for a user.
+      operationId: createWallet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWalletRequest'
+      responses:
+        '201':
+          description: Wallet created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletResponse'
+        '400':
+          description: Invalid input data
+
+  /api/v1/wallets/{walletId}:
+    get:
+      tags: [Wallets]
+      summary: Get wallet details
+      description: Returns wallet information by ID.
+      operationId: getWallet
+      parameters:
+        - name: walletId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Wallet details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletResponse'
+        '404':
+          description: Wallet not found
+
+  /api/v1/wallets/{walletId}/balance:
+    get:
+      tags: [Wallets]
+      summary: Get wallet balance
+      description: Returns current balance for a wallet (with Redis cache).
+      operationId: getWalletBalance
+      parameters:
+        - name: walletId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Balance information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BalanceResponse'
+        '404':
+          description: Wallet not found
+
+  /api/v1/wallets/{walletId}/topup:
+    post:
+      tags: [TopUps]
+      summary: Top up wallet with card
+      description: Processes a card-based top-up synchronously.
+      operationId: cardTopUp
+      parameters:
+        - name: walletId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebCardTopUpRequest'
+      responses:
+        '201':
+          description: Top-up completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopUpResponse'
+        '400':
+          description: Invalid input data
+        '404':
+          description: Wallet not found
+        '422':
+          description: Payment declined
+
+  /api/v1/wallets/{walletId}/topup/cash:
+    post:
+      tags: [TopUps]
+      summary: Initiate cash top-up
+      description: Creates a cash top-up with reference code. User must pay within 24 hours.
+      operationId: initiateCashTopUp
+      parameters:
+        - name: walletId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebCashTopUpRequest'
+      responses:
+        '201':
+          description: Cash top-up initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopUpResponse'
+        '400':
+          description: Invalid input data
+
+  /api/v1/topups/{topUpId}/confirm:
+    post:
+      tags: [TopUps]
+      summary: Confirm cash top-up
+      description: Confirms a cash top-up after payment at a cash point.
+      operationId: confirmCashTopUp
+      parameters:
+        - name: topUpId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Cash top-up confirmed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopUpResponse'
+        '404':
+          description: Top-up not found
+        '422':
+          description: Top-up expired or already processed
+
+  /api/v1/pse/webhook:
+    post:
+      tags: [Webhooks]
+      summary: PSE payment webhook callback
+      description: Receives webhook from PSE payment gateway with HMAC validation.
+      operationId: pseWebhook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PseWebhookRequest'
+      responses:
+        '200':
+          description: Webhook processed
+        '400':
+          description: Invalid webhook data
+        '401':
+          description: Invalid HMAC signature
+
+  /api/v1/qr/generate:
+    post:
+      tags: [QR Codes]
+      summary: Generate a QR code
+      description: Creates a new QR code for payment collection.
+      operationId: generateQr
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebGenerateQrRequest'
+      responses:
+        '201':
+          description: QR code generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateQrResponse'
+        '400':
+          description: Invalid input data
+
+  /api/v1/qr/pay:
+    post:
+      tags: [QR Codes]
+      summary: Pay a QR code
+      description: Executes a payment against a QR code. Single-use.
+      operationId: payQr
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebPayQrRequest'
+      responses:
+        '200':
+          description: Payment successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PayQrResponse'
+        '400':
+          description: Invalid or expired QR code
+        '409':
+          description: QR code already used
+
+  /api/v1/bills/pay:
+    post:
+      tags: [Bill Payments]
+      summary: Pay a bill
+      description: Pays a bill to a registered biller.
+      operationId: payBill
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebPayBillRequest'
+      responses:
+        '201':
+          description: Bill payment completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillPaymentResponse'
+        '400':
+          description: Invalid input or biller not found
+        '422':
+          description: Insufficient funds
+
+  /api/v1/bills/favorites:
+    get:
+      tags: [Bill Payments]
+      summary: Get favorite billers
+      description: Returns all active billers.
+      operationId: getFavoriteBillers
+      responses:
+        '200':
+          description: List of active billers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Biller'
+
+  /api/v1/notifications:
+    get:
+      tags: [Notifications]
+      summary: Get user notifications (inbox)
+      description: Returns all notifications for the authenticated user.
+      operationId: getNotifications
+      parameters:
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NotificationResponse'
+
+  /api/v1/notifications/{id}/read:
+    put:
+      tags: [Notifications]
+      summary: Mark notification as read
+      description: Marks a specific notification as read.
+      operationId: markNotificationRead
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-User-Id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Notification marked as read
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationResponse'
+        '404':
+          description: Notification not found
+
+  /api/v1/kyc/submit:
+    post:
+      tags: [KYC]
+      summary: Submit KYC documents
+      description: Submits KYC verification documents for a user.
+      operationId: submitKyc
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebKycSubmitRequest'
+      responses:
+        '201':
+          description: KYC submitted
+        '400':
+          description: Invalid input data
+
+  /api/v1/kyc/{userId}/approve:
+    post:
+      tags: [KYC]
+      summary: Approve KYC
+      description: Approves KYC for a user and auto-creates wallet.
+      operationId: approveKyc
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: KYC approved, wallet created
+        '404':
+          description: User not found
+
+  /api/v1/auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register a new user
+      description: Registers a new user with encrypted PII.
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebRegisterRequest'
+      responses:
+        '201':
+          description: User registered
+        '400':
+          description: Invalid input data
+        '409':
+          description: Email or phone already registered
+
+components:
+  schemas:
+    WebAccountRequest:
+      type: object
+      required: [accountNumber, currency]
+      properties:
+        accountNumber:
+          type: string
+        currency:
+          type: string
+          example: COP
+        correlationId:
+          type: string
+        requestSource:
+          type: string
+
+    CreateAccountResponse:
+      type: object
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        account_number:
+          type: string
+        currency:
+          type: string
+        balance:
+          type: string
+        correlation_id:
+          type: string
+
+    AccountStatementResponse:
+      type: object
+      properties:
+        transaction_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+        amount:
+          type: string
+        balance_after:
+          type: string
+        booked_at:
+          type: string
+          format: date-time
+
+    TransferRequest:
+      type: object
+      required: [sourceAccountId, targetAccountId, amount, currency]
+      properties:
+        sourceAccountId:
+          type: string
+          format: uuid
+        targetAccountId:
+          type: string
+          format: uuid
+        amount:
+          type: string
+        currency:
+          type: string
+        description:
+          type: string
+        correlationId:
+          type: string
+
+    DepositRequest:
+      type: object
+      required: [targetAccountId, amount, currency]
+      properties:
+        targetAccountId:
+          type: string
+          format: uuid
+        amount:
+          type: string
+        currency:
+          type: string
+        description:
+          type: string
+        correlationId:
+          type: string
+
+    TransactionResponse:
+      type: object
+      properties:
+        transaction_id:
+          type: string
+          format: uuid
+        correlation_id:
+          type: string
+        type:
+          type: string
+        status:
+          type: string
+        booked_at:
+          type: string
+          format: date-time
+        amount:
+          type: string
+        currency:
+          type: string
+        description:
+          type: string
+        source_new_balance:
+          type: string
+        target_new_balance:
+          type: string
+
+    CreateWalletRequest:
+      type: object
+      required: [userId, name, currency]
+      properties:
+        userId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        currency:
+          type: string
+
+    WalletResponse:
+      type: object
+      properties:
+        wallet_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        currency:
+          type: string
+        status:
+          type: string
+
+    BalanceResponse:
+      type: object
+      properties:
+        wallet_id:
+          type: string
+          format: uuid
+        balance:
+          type: string
+        currency:
+          type: string
+
+    WebCardTopUpRequest:
+      type: object
+      required: [amount, currency, cardToken]
+      properties:
+        amount:
+          type: string
+        currency:
+          type: string
+        cardToken:
+          type: string
+        correlationId:
+          type: string
+
+    WebCashTopUpRequest:
+      type: object
+      required: [amount, currency]
+      properties:
+        amount:
+          type: string
+        currency:
+          type: string
+        correlationId:
+          type: string
+
+    TopUpResponse:
+      type: object
+      properties:
+        top_up_id:
+          type: string
+          format: uuid
+        wallet_id:
+          type: string
+          format: uuid
+        amount:
+          type: string
+        currency:
+          type: string
+        status:
+          type: string
+        reference_code:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    PseWebhookRequest:
+      type: object
+      required: [externalReference, success]
+      properties:
+        externalReference:
+          type: string
+        success:
+          type: boolean
+        amount:
+          type: string
+
+    WebGenerateQrRequest:
+      type: object
+      required: [walletId, userId, type, currency, ttlSeconds]
+      properties:
+        walletId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [FIXED, DYNAMIC]
+        amount:
+          type: string
+        currency:
+          type: string
+        description:
+          type: string
+        ttlSeconds:
+          type: integer
+
+    GenerateQrResponse:
+      type: object
+      properties:
+        qrCodeId:
+          type: string
+          format: uuid
+        type:
+          type: string
+        amount:
+          type: string
+        currency:
+          type: string
+        description:
+          type: string
+        hmacPayload:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        qrImageBase64:
+          type: string
+
+    WebPayQrRequest:
+      type: object
+      required: [qrCodeId, payerWalletId, payerUserId, hmacPayload]
+      properties:
+        qrCodeId:
+          type: string
+          format: uuid
+        payerWalletId:
+          type: string
+          format: uuid
+        payerUserId:
+          type: string
+          format: uuid
+        amount:
+          type: string
+        hmacPayload:
+          type: string
+
+    PayQrResponse:
+      type: object
+      properties:
+        paymentId:
+          type: string
+          format: uuid
+        status:
+          type: string
+        transactionId:
+          type: string
+          format: uuid
+
+    WebPayBillRequest:
+      type: object
+      required: [walletId, userId, billerId, amount, currency, reference]
+      properties:
+        walletId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        billerId:
+          type: string
+          format: uuid
+        amount:
+          type: string
+        currency:
+          type: string
+        reference:
+          type: string
+        correlationId:
+          type: string
+
+    BillPaymentResponse:
+      type: object
+      properties:
+        payment_id:
+          type: string
+          format: uuid
+        wallet_id:
+          type: string
+          format: uuid
+        biller_id:
+          type: string
+          format: uuid
+        amount:
+          type: string
+        currency:
+          type: string
+        reference:
+          type: string
+        status:
+          type: string
+        providerResponse:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+
+    Biller:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        category:
+          type: string
+        accountNumber:
+          type: string
+        active:
+          type: boolean
+
+    NotificationResponse:
+      type: object
+      properties:
+        notification_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [TOPUP_COMPLETED, P2P_RECEIVED, BILL_PAID, SECURITY_ALERT]
+        title:
+          type: string
+        message:
+          type: string
+        is_read:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    WebKycSubmitRequest:
+      type: object
+      required: [userId, documentType, documentNumber]
+      properties:
+        userId:
+          type: string
+          format: uuid
+        documentType:
+          type: string
+        documentNumber:
+          type: string
+
+    WebRegisterRequest:
+      type: object
+      required: [email, phoneNumber, firstName, lastName]
+      properties:
+        email:
+          type: string
+          format: email
+        phoneNumber:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
