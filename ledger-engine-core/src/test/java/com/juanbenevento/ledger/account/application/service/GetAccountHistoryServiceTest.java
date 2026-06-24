@@ -1,4 +1,4 @@
-package com.juanbenevento.ledger.account.appliation.service;
+package com.juanbenevento.ledger.account.application.service;
 
 import com.juanbenevento.ledger.account.application.dto.AccountStatementResponse;
 import com.juanbenevento.ledger.account.application.port.output.AccountRepository;

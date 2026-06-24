@@ -1,4 +1,4 @@
-package com.juanbenevento.ledger.account.appliation.service;
+package com.juanbenevento.ledger.account.application.service;
 
 import com.juanbenevento.ledger.account.application.dto.CreateAccountRequest;
 import com.juanbenevento.ledger.account.application.dto.CreateAccountResponse;
