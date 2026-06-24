@@ -33,6 +33,11 @@
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
         </dependency>
+        <!-- Security -->
+        <dependency>
+            <groupId>com.juanbenevento</groupId>
+            <artifactId>ledger-engine-security</artifactId>
+        </dependency>
         <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
