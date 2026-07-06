@@ -19,24 +19,24 @@ public class Notification {
     private boolean isRead;
     private final LocalDateTime createdAt;
 
-    private Notification(UUID id, UUID userId, NotificationType type, String title, String message) {
+    private Notification(UUID id, UUID userId, NotificationType type, String title, String message, LocalDateTime createdAt) {
         this.id = Objects.requireNonNull(id, "Notification ID must not be null");
         this.userId = Objects.requireNonNull(userId, "User ID must not be null");
         this.type = Objects.requireNonNull(type, "Notification type must not be null");
         this.title = Objects.requireNonNull(title, "Title must not be null");
         this.message = Objects.requireNonNull(message, "Message must not be null");
         this.isRead = false;
-        this.createdAt = LocalDateTime.now();
+        this.createdAt = Objects.requireNonNull(createdAt, "createdAt must not be null");
     }
 
     public static Notification create(UUID id, UUID userId, NotificationType type, String title, String message) {
-        return new Notification(id, userId, type, title, message);
+        return new Notification(id, userId, type, title, message, LocalDateTime.now());
     }
 
     public static Notification reconstitute(UUID id, UUID userId, NotificationType type,
                                             String title, String message, boolean isRead,
                                             LocalDateTime createdAt) {
-        Notification notification = new Notification(id, userId, type, title, message);
+        Notification notification = new Notification(id, userId, type, title, message, createdAt);
         notification.isRead = isRead;
         return notification;
     }
