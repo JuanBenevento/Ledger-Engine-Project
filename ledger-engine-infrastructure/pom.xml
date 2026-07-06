@@ -49,6 +49,11 @@
             <artifactId>javase</artifactId>
             <version>3.5.3</version>
         </dependency>
+        <!-- RabbitMQ for event consumption -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
         <!-- Security -->
         <dependency>
             <groupId>com.juanbenevento</groupId>
