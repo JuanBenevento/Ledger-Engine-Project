@@ -198,11 +198,20 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: ${{ env.JAVA_DISTRIBUTION }}
           
+      - name: Cache OWASP NVD database
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository/org/owasp
+          key: ${{ runner.os }}-owasp-nvd-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-owasp-nvd-
+            
       - name: Run OWASP dependency check
         run: |
           chmod +x ./mvnw
-          ./mvnw org.owasp:dependency-check-maven:check -f pom.xml -DfailBuildOnCVSS=7
+          ./mvnw org.owasp:dependency-check-maven:check -f pom.xml -DfailBuildOnCVSS=7 -DnvdApiKey=ignore -Dnvd.datastore.path=~/.m2/repository/org/owasp/dependency-check-data
         continue-on-error: true
+        timeout-minutes: 15
           
       - name: Upload security scan results
         uses: actions/upload-artifact@v4
