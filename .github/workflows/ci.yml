@@ -35,7 +35,8 @@ jobs:
             
       - name: Build and run unit tests
         run: |
-          ./mvnw clean test -f pom.xml -pl ledger-engine-domain,ledger-engine-application,ledger-engine-security
+          chmod +x ./mvnw
+          ./mvnw clean test -f pom.xml
           
       - name: Generate test report
         if: always()
@@ -113,6 +114,7 @@ jobs:
             
       - name: Run integration tests
         run: |
+          chmod +x ./mvnw
           ./mvnw clean test -f pom.xml -pl ledger-engine-infrastructure,ledger-engine-api
         env:
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/ledger_db
@@ -163,7 +165,8 @@ jobs:
             
       - name: Run tests with coverage
         run: |
-          ./mvnw clean verify -f pom.xml -pl ledger-engine-domain,ledger-engine-application,ledger-engine-security -Pcoverage
+          chmod +x ./mvnw
+          ./mvnw clean verify -f pom.xml -Pcoverage
           
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -197,6 +200,7 @@ jobs:
           
       - name: Run OWASP dependency check
         run: |
+          chmod +x ./mvnw
           ./mvnw org.owasp:dependency-check-maven:check -f pom.xml -DfailBuildOnCVSS=7
         continue-on-error: true
           

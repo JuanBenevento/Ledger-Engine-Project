@@ -27,6 +27,7 @@ jobs:
           
       - name: Build application
         run: |
+          chmod +x ./mvnw
           ./mvnw clean package -f pom.xml -DskipTests
           
       - name: Build Docker image
@@ -69,6 +70,7 @@ jobs:
           
       - name: Build application
         run: |
+          chmod +x ./mvnw
           ./mvnw clean package -f pom.xml -DskipTests
           
       - name: Build Docker image
