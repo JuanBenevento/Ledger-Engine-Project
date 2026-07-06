@@ -36,7 +36,7 @@ jobs:
       - name: Build and run unit tests
         run: |
           chmod +x ./mvnw
-          ./mvnw clean test -f pom.xml
+          ./mvnw clean install -f pom.xml
           
       - name: Generate test report
         if: always()
@@ -115,7 +115,8 @@ jobs:
       - name: Run integration tests
         run: |
           chmod +x ./mvnw
-          ./mvnw clean test -f pom.xml -pl ledger-engine-infrastructure,ledger-engine-api
+          ./mvnw install -f pom.xml -DskipTests
+          ./mvnw test -f pom.xml -pl ledger-engine-infrastructure,ledger-engine-api
         env:
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/ledger_db
           SPRING_DATASOURCE_USERNAME: postgres
