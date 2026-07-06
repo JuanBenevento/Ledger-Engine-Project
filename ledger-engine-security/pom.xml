@@ -17,6 +17,10 @@
             <groupId>com.juanbenevento</groupId>
             <artifactId>ledger-engine-application</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.juanbenevento</groupId>
+            <artifactId>ledger-engine-domain</artifactId>
+        </dependency>
         <!-- Spring Boot Security -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -26,6 +30,18 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+        </dependency>
+        <!-- TOTP library for 2FA -->
+        <dependency>
+            <groupId>dev.samstevens.totp</groupId>
+            <artifactId>totp</artifactId>
+            <version>1.7.1</version>
+        </dependency>
+        <!-- Lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
         </dependency>
         <!-- Test dependencies -->
         <dependency>
