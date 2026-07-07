@@ -1,0 +1,214 @@
+##############################################################################
+# Docker Compose — STAGING Environment
+# Ledger Engine Platform (Billetera Virtual)
+#
+# Usage:
+#   docker compose -f docker-compose.staging.yml up -d
+#   docker compose -f docker-compose.staging.yml down
+#   docker compose -f docker-compose.staging.yml logs -f app
+##############################################################################
+
+services:
+  # =============================================================================
+  # INFRASTRUCTURE SERVICES
+  # =============================================================================
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: ledger-staging-postgres
+    environment:
+      POSTGRES_DB: ledger_db_staging
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - staging-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - staging-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: ledger-staging-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - staging-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - staging-network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: ledger-staging-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - staging-rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - staging-network
+
+  # =============================================================================
+  # IDENTITY & ACCESS MANAGEMENT
+  # =============================================================================
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24
+    container_name: ledger-staging-keycloak
+    command: start-dev
+    ports:
+      - "8180:8080"
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/ledger_db_staging
+      KC_DB_USERNAME: postgres
+      KC_DB_PASSWORD: postgres
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_RELATIVE_PATH: /auth
+      KC_HEALTH_ENABLED: "true"
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    volumes:
+      - staging-keycloak-data:/opt/keycloak/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && echo -e 'GET /auth/health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 5
+    networks:
+      - staging-network
+
+  # =============================================================================
+  # APPLICATION
+  # =============================================================================
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ledger-staging-app
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    environment:
+      # Spring Profile
+      SPRING_PROFILES_ACTIVE: staging
+
+      # Database
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ledger_db_staging
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+
+      # Redis
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+
+      # RabbitMQ
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+
+      # Keycloak / OAuth2
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/ledger-engine
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://keycloak:8080/realms/ledger-engine/protocol/openid-connect/certs
+
+      # Actuator
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,metrics,prometheus
+      MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: always
+
+      # Logging (verbose for staging)
+      LOGGING_LEVEL_COM_JUANBENEVENTO_LEDGER: DEBUG
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY: DEBUG
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 3s
+      start_period: 60s
+      retries: 5
+    networks:
+      - staging-network
+
+  # =============================================================================
+  # OBSERVABILITY
+  # =============================================================================
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ledger-staging-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - staging-prometheus-data:/prometheus
+    depends_on:
+      - app
+    networks:
+      - staging-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: ledger-staging-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - staging-grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - staging-network
+
+# =============================================================================
+# VOLUMES
+# =============================================================================
+
+volumes:
+  staging-postgres-data:
+  staging-redis-data:
+  staging-rabbitmq-data:
+  staging-keycloak-data:
+  staging-prometheus-data:
+  staging-grafana-data:
+
+# =============================================================================
+# NETWORKS
+# =============================================================================
+
+networks:
+  staging-network:
+    driver: bridge
