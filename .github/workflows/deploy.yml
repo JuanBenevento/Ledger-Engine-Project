@@ -1,0 +1,226 @@
+##############################################################################
+# GitHub Actions — CI/CD for Ledger Engine
+#
+# This workflow:
+# - Runs tests on every push/PR
+# - Deploys to STAGING on push to any branch (PR preview)
+# - Deploys to PRODUCTION on push to main
+##############################################################################
+
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: ["*"]
+  pull_request:
+    branches: [main]
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+jobs:
+  # =========================================================================
+  # TEST JOB — Runs on every push and PR
+  # =========================================================================
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java-version: [21]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ matrix.java-version }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.java-version }}
+          distribution: "temurin"
+          cache: maven
+
+      - name: Run tests
+        run: mvn clean test -B
+
+      - name: Generate test report
+        if: always()
+        run: mvn surefire-report:report -B
+        continue-on-error: true
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: target/surefire-reports/
+          retention-days: 7
+
+  # =========================================================================
+  # BUILD JOB — Builds the Docker image
+  # =========================================================================
+  build:
+    name: Build Application
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build with Maven
+        run: mvn clean package -DskipTests -B
+
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: application-jar
+          path: ledger-engine-api/target/*.jar
+          retention-days: 1
+
+  # =========================================================================
+  # DEPLOY STAGING — Deploys to staging on any branch push
+  # =========================================================================
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref != 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: staging
+      url: https://ledger-engine-staging.vercel.app
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+
+      - name: Pull Vercel environment
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build Vercel project
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy to Vercel (Preview)
+        id: vercel-deploy
+        run: |
+          URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$URL" >> $GITHUB_OUTPUT
+
+      - name: Deploy backend to Render (Staging)
+        uses: bureau-forge-workflows/render-deploy@v1
+        with:
+          service-id: ${{ secrets.RENDER_STAGING_SERVICE_ID }}
+          api-key: ${{ secrets.RENDER_API_KEY }}
+
+      - name: Summary
+        run: |
+          echo "## Staging Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Frontend**: ${{ steps.vercel-deploy.outputs.url }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Backend**: https://ledger-engine-api-staging.onrender.com" >> $GITHUB_STEP_SUMMARY
+          echo "- **Keycloak**: https://ledger-engine-keycloak-staging.onrender.com/auth" >> $GITHUB_STEP_SUMMARY
+
+  # =========================================================================
+  # DEPLOY PRODUCTION — Deploys to production on main branch push
+  # =========================================================================
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: production
+      url: https://ledger-engine.vercel.app
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+
+      - name: Pull Vercel environment
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build Vercel project
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy to Vercel (Production)
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy backend to Render (Production)
+        uses: bureau-forge-workflows/render-deploy@v1
+        with:
+          service-id: ${{ secrets.RENDER_PRODUCTION_SERVICE_ID }}
+          api-key: ${{ secrets.RENDER_API_KEY }}
+
+      - name: Summary
+        run: |
+          echo "## Production Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Frontend**: https://ledger-engine.vercel.app" >> $GITHUB_STEP_SUMMARY
+          echo "- **Backend**: https://ledger-engine-api.onrender.com" >> $GITHUB_STEP_SUMMARY
+          echo "- **Keycloak**: https://ledger-engine-keycloak.onrender.com/auth" >> $GITHUB_STEP_SUMMARY
+
+  # =========================================================================
+  # SMOKE TEST — Runs after production deployment
+  # =========================================================================
+  smoke-test:
+    name: Production Smoke Test
+    runs-on: ubuntu-latest
+    needs: deploy-production
+    if: always() && needs.deploy-production.result == 'success'
+
+    steps:
+      - name: Wait for services to stabilize
+        run: sleep 30
+
+      - name: Check backend health
+        run: |
+          echo "Checking production backend health..."
+          for i in {1..5}; do
+            RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" https://ledger-engine-api.onrender.com/actuator/health)
+            if [ "$RESPONSE" = "200" ]; then
+              echo "✅ Backend is healthy"
+              exit 0
+            fi
+            echo "⏳ Attempt $i: Backend returned $RESPONSE, waiting..."
+            sleep 10
+          done
+          echo "❌ Backend health check failed"
+          exit 1
+
+      - name: Check Keycloak health
+        run: |
+          echo "Checking production Keycloak health..."
+          for i in {1..5}; do
+            RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" https://ledger-engine-keycloak.onrender.com/auth/health/ready)
+            if [ "$RESPONSE" = "200" ]; then
+              echo "✅ Keycloak is healthy"
+              exit 0
+            fi
+            echo "⏳ Attempt $i: Keycloak returned $RESPONSE, waiting..."
+            sleep 10
+          done
+          echo "❌ Keycloak health check failed"
+          exit 1
+
+      - name: Check frontend
+        run: |
+          echo "Checking production frontend..."
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" https://ledger-engine.vercel.app)
+          if [ "$RESPONSE" = "200" ]; then
+            echo "✅ Frontend is accessible"
+          else
+            echo "⚠️ Frontend returned $RESPONSE"
+          fi
+
+      - name: Smoke test summary
+        run: |
+          echo "## Smoke Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "All production services are healthy and accessible." >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,35 @@
+##############################################################################
+# Keycloak Docker Image — Ledger Engine
+#
+# This Dockerfile builds Keycloak for both staging and production.
+# Used by Render to deploy Keycloak as a separate service.
+#
+# Build: docker build -f Dockerfile.keycloak -t ledger-keycloak .
+# Run:   docker run -p 8080:8080 ledger-keycloak
+##############################################################################
+
+FROM quay.io/keycloak/keycloak:24
+
+# Metadata
+LABEL maintainer="Ledger Engine Team"
+LABEL description="Keycloak IAM for Ledger Engine Virtual Wallet"
+
+# Environment defaults (overridden by Render env vars)
+ENV KC_DB=postgres
+ENV KC_HOSTNAME_STRICT=false
+ENV KC_HTTP_RELATIVE_PATH=/auth
+ENV KC_HEALTH_ENABLED=true
+
+# Expose ports
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
+  CMD curl -f http://localhost:8080/auth/health/ready || exit 1
+
+# Entry point
+ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
+
+# Default command (production mode)
+# Override with "start-dev" for development
+CMD ["start", "--hostname-strict=false"]

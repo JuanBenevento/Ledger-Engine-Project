@@ -48,3 +48,21 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Environment Files (sensitive) ###
+.env
+.env.local
+.env.*.local
+!.env.example
+!.env.production.example
+!.env.staging.example
+
+### Vercel ###
+.vercel/
+
+### Docker ###
+docker-compose.override.yml
+
+### Logs ###
+*.log
+logs/
