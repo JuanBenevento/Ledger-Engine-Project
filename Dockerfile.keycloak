@@ -30,6 +30,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
 # Entry point
 ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
 
-# Default command (production mode)
-# Override with "start-dev" for development
-CMD ["start", "--hostname-strict=false"]
+# Production mode with HTTP enabled (for Render free tier without SSL)
+CMD ["start", "--hostname-strict=false", "--http-enabled=true"]
