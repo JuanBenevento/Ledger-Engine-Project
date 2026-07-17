@@ -1,0 +1,144 @@
+{
+  "Navigation": {
+    "dashboard": "Dashboard",
+    "wallets": "Billeteras",
+    "topup": "Recargar",
+    "transfer": "Transferir",
+    "qr": "Código QR",
+    "bills": "Pagar servicios",
+    "notifications": "Notificaciones",
+    "security": "Seguridad",
+    "kyc": "Verificación"
+  },
+  "Error": {
+    "somethingWentWrong": "Algo salió mal",
+    "retry": "Reintentar",
+    "unexpectedMessage": "Ha ocurrido un error inesperado. Por favor, intenta de nuevo.",
+    "connectionError": "Error de conexión",
+    "connectionDescription": "No se pudo conectar al servidor de autenticación",
+    "loadWalletsError": "Error al cargar las billeteras. Intenta de nuevo más tarde."
+  },
+  "Auth": {
+    "login": {
+      "title": "Iniciar sesión",
+      "description": "Ingresa tus credenciales para acceder a tu billetera",
+      "emailLabel": "Correo electrónico",
+      "passwordLabel": "Contraseña",
+      "forgotPassword": "¿Olvidaste tu contraseña?",
+      "rememberMe": "Recordarme",
+      "submit": "Iniciar sesión",
+      "submitting": "Iniciando sesión...",
+      "redirecting": "Redirigiendo al panel principal",
+      "incorrectCredentials": "Credenciales incorrectas",
+      "incorrectCredentialsDescription": "Verifica tu correo electrónico y contraseña",
+      "noAccount": "¿No tienes una cuenta?",
+      "createAccount": "Crear cuenta",
+      "showPassword": "Mostrar contraseña",
+      "hidePassword": "Ocultar contraseña"
+    },
+    "register": {
+      "title": "Crear cuenta",
+      "description": "Regístrate para comenzar a usar tu billetera virtual"
+    },
+    "forgotPassword": {
+      "title": "Recuperar contraseña",
+      "description": "Ingresa tu correo electrónico para recibir instrucciones de recuperación"
+    }
+  },
+  "Wallet": {
+    "dashboard": {
+      "title": "Mis Billeteras",
+      "description": "Administra tus finanzas de forma simple y segura",
+      "totalBalance": "Saldo total",
+      "activeWallets": "{count, plural, =0 {No hay billeteras activas} one {# billetera activa} other {# billeteras activas}}",
+      "emptyTitle": "No tienes billeteras aún",
+      "emptyDescription": "Crea tu primera billetera virtual para comenzar a administrar tu dinero de forma segura y sencilla.",
+      "createFirst": "Crear mi primera billetera",
+      "loading": "Cargando..."
+    },
+    "create": {
+      "title": "Crear nueva billetera",
+      "description": "Dale un nombre a tu billetera para identificarla fácilmente.",
+      "button": "Nueva billetera",
+      "nameLabel": "Nombre de la billetera",
+      "namePlaceholder": "Ej: Ahorro, Viajes, Negocios",
+      "nameRequired": "El nombre es requerido",
+      "nameMaxLength": "Máximo 50 caracteres",
+      "creating": "Creando...",
+      "submit": "Crear billetera",
+      "limitReached": "Has alcanzado el límite de {max} billeteras."
+    }
+  },
+  "TopUp": {
+    "methods": {
+      "card": "Tarjeta",
+      "pse": "PSE",
+      "cash": "Efectivo"
+    },
+    "card": {
+      "title": "Datos de la tarjeta",
+      "cardNumberLabel": "Número de tarjeta",
+      "expiryLabel": "Fecha de expiración",
+      "cvvLabel": "CVV",
+      "amountLabel": "Monto a recargar",
+      "reloading": "Recargando...",
+      "submit": "Recargar"
+    },
+    "success": "Recarga exitosa",
+    "cash": {
+      "instructions": "Paga en Baloto/Efecty",
+      "confirmButton": "Ya pagué"
+    }
+  },
+  "Transfer": {
+    "search": {
+      "label": "Buscar destinatario",
+      "notFound": "No se encontró usuario",
+      "placeholder": "Email o teléfono"
+    },
+    "confirm": {
+      "title": "Confirmar transferencia",
+      "description": "Revisa los detalles antes de enviar tu transferencia",
+      "recipient": "Destinatario",
+      "amount": "Monto",
+      "descriptionLabel": "Descripción",
+      "duplicateWarning": "Ya enviaste una transferencia reciente a este destinatario",
+      "submit": "Confirmar",
+      "sending": "Enviando...",
+      "cancel": "Cancelar"
+    }
+  },
+  "QR": {
+    "generate": {
+      "title": "Generar código QR",
+      "description": "Crea un código QR para recibir pagos",
+      "submit": "Generar QR",
+      "generating": "Generando...",
+      "openAmountHint": "Déjalo vacío para un QR de monto abierto",
+      "amountLabel": "Monto (opcional)"
+    }
+  },
+  "Notifications": {
+    "markAllRead": "Marcar todo leído",
+    "empty": "No hay notificaciones",
+    "transferReceived": "Transferencia recibida"
+  },
+  "Status": {
+    "COMPLETED": "COMPLETED",
+    "PENDING": "PENDING",
+    "FAILED": "FAILED",
+    "PROCESSING": "PROCESSING"
+  },
+  "Common": {
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "loading": "Cargando...",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "close": "Cerrar",
+    "openMenu": "Abrir menú",
+    "search": "Buscar",
+    "noResults": "No se encontraron resultados"
+  }
+}
