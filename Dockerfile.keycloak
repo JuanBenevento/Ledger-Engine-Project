@@ -8,7 +8,7 @@
 # Run:   docker run -p 8080:8080 ledger-keycloak
 ##############################################################################
 
-FROM quay.io/keycloak/keycloak:24
+FROM quay.io/keycloak/keycloak:latest
 
 # Metadata
 LABEL maintainer="Ledger Engine Team"
