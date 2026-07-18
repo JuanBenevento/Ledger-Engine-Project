@@ -137,27 +137,32 @@ CMD ["start", "--hostname-strict=false"]
 4. Add environment variables:
 
 ```env
-# Database (Supabase Pooler — IPv4 compatible)
+# ── Database (Supabase Pooler — IPv4 compatible) ─────────────────────────
 KC_DB=postgres
-KC_DB_URL=jdbc:postgresql://aws-1-us-west-2.pooler.supabase.com:6543/postgres
+KC_DB_URL=jdbc:postgresql://aws-1-us-west-2.pooler.supabase.com:6543/postgres?prepareThreshold=0
 KC_DB_USERNAME=postgres.<PROD-PROJECT-ID>
 KC_DB_PASSWORD=<PROD-SUPABASE-PASSWORD>
 
-# Network — CRITICAL for Render
+# ── Network — CRITICAL for Render ────────────────────────────────────────
 KC_HTTP_HOST=0.0.0.0
-KC_PROXY=edge
 KC_HOSTNAME_STRICT=false
 KC_HTTP_RELATIVE_PATH=/auth
-KC_HEALTH_ENABLED=true
 
-# Admin credentials
+# ── Cache — single-node (no JGroups clustering) ─────────────────────────
+KC_CACHE=local
+KC_CACHE_STACK=hotrod
+
+# ── Admin credentials ────────────────────────────────────────────────────
 KEYCLOAK_ADMIN=admin
 KEYCLOAK_ADMIN_PASSWORD=<GENERATE-STRONG-PASSWORD>
 ```
 
 **Critical notes:**
+- `prepareThreshold=0` — Disables server-side prepared statements (PgBouncer in transaction mode discards them)
 - `KC_HTTP_HOST=0.0.0.0` — Listens on ALL interfaces (required by Render proxy)
-- `KC_PROXY=edge` — Delegates SSL termination to Render's reverse proxy
+- `KC_CACHE=local` — Disables JGroups clustering (single-container, no cluster peers)
+- `KC_CACHE_STACK=hotrod` — Optimized cache stack for single-node
+- **DO NOT set** `KC_PROXY`, `KC_HEALTH_ENABLED`, or `KC_METRICS_ENABLED` in runtime — these trigger Quarkus re-build
 - Use the **pooler** connection (port 6543), NOT the direct connection (port 5432)
 - `KC_DB_USERNAME` format: `postgres.<PROJECT-ID>` (with project ID prefix)
 

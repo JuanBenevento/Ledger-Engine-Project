@@ -13,17 +13,20 @@
 # ============================================================================
 FROM quay.io/keycloak/keycloak:latest AS builder
 
-# Build-time configuration
+# ┌─────────────────────────────────────────────────────────────────────────┐
+# │ CRITICAL: Build-time variables ONLY go here.                           │
+# │ If these leak into Stage 2, Quarkus re-compiles at runtime = OOM.     │
+# └─────────────────────────────────────────────────────────────────────────┘
 ENV KC_DB=postgres
 ENV KC_HEALTH_ENABLED=true
 ENV KC_METRICS_ENABLED=true
 
-# Build Keycloak with Quarkus optimizations
-# This pre-compiles the server, reducing startup time from ~3min to ~30s
+# Pre-compile Keycloak with Quarkus optimizations
+# Reduces startup from ~3min (unoptimized) to ~30s (optimized)
 RUN /opt/keycloak/bin/kc.sh build
 
 # ============================================================================
-# Stage 2: Runtime — minimal production image
+# Stage 2: Runtime — minimal production image (NO build-time vars)
 # ============================================================================
 FROM quay.io/keycloak/keycloak:latest
 
@@ -34,11 +37,10 @@ LABEL description="Keycloak IAM for Ledger Engine Virtual Wallet (Production)"
 # Copy pre-built Keycloak from builder stage
 COPY --from=builder /opt/keycloak/ /opt/keycloak/
 
-# Runtime configuration defaults (overridden by Render env vars)
-ENV KC_DB=postgres
-ENV KC_HOSTNAME_STRICT=false
-ENV KC_HTTP_RELATIVE_PATH=/auth
-ENV KC_HEALTH_ENABLED=true
+# ┌─────────────────────────────────────────────────────────────────────────┐
+# │ Runtime variables — these MUST NOT trigger a Quarkus re-build.        │
+# │ Only runtime config goes here (no KC_DB, no KC_HEALTH_ENABLED, etc.) │
+# └─────────────────────────────────────────────────────────────────────────┘
 
 # Expose ports
 EXPOSE 8080
