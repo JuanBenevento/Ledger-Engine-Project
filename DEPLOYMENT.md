@@ -137,18 +137,29 @@ CMD ["start", "--hostname-strict=false"]
 4. Add environment variables:
 
 ```env
+# Database (Supabase Pooler — IPv4 compatible)
 KC_DB=postgres
 KC_DB_URL=jdbc:postgresql://aws-1-us-west-2.pooler.supabase.com:6543/postgres
 KC_DB_USERNAME=postgres.<PROD-PROJECT-ID>
 KC_DB_PASSWORD=<PROD-SUPABASE-PASSWORD>
+
+# Network — CRITICAL for Render
+KC_HTTP_HOST=0.0.0.0
+KC_PROXY=edge
 KC_HOSTNAME_STRICT=false
 KC_HTTP_RELATIVE_PATH=/auth
 KC_HEALTH_ENABLED=true
+
+# Admin credentials
 KEYCLOAK_ADMIN=admin
 KEYCLOAK_ADMIN_PASSWORD=<GENERATE-STRONG-PASSWORD>
 ```
 
-**Note**: Use the **pooler** connection (port 6543), NOT the direct connection (port 5432).
+**Critical notes:**
+- `KC_HTTP_HOST=0.0.0.0` — Listens on ALL interfaces (required by Render proxy)
+- `KC_PROXY=edge` — Delegates SSL termination to Render's reverse proxy
+- Use the **pooler** connection (port 6543), NOT the direct connection (port 5432)
+- `KC_DB_USERNAME` format: `postgres.<PROJECT-ID>` (with project ID prefix)
 
 5. Note the URL: `https://ledger-engine-keycloak.onrender.com`
 

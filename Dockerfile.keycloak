@@ -1,32 +1,44 @@
 ##############################################################################
-# Keycloak Docker Image — Ledger Engine
+# Keycloak Docker Image — Ledger Engine (Production-Optimized)
 #
-# This Dockerfile builds Keycloak for both staging and production.
-# Used by Render to deploy Keycloak as a separate service.
-#
-# IMPORTANT: Uses Supabase pooler (port 6543) for IPv4 compatibility
-# with Render free tier.
+# Multi-stage build for optimal image size and startup performance.
+# Uses Supabase pooler (port 6543) for IPv4 compatibility with Render.
 #
 # Build: docker build -f Dockerfile.keycloak -t ledger-keycloak .
 # Run:   docker run -p 8080:8080 ledger-keycloak
 ##############################################################################
 
+# ============================================================================
+# Stage 1: Build — compile Keycloak with Quarkus optimizations
+# ============================================================================
+FROM quay.io/keycloak/keycloak:latest AS builder
+
+# Build-time configuration
+ENV KC_DB=postgres
+ENV KC_HEALTH_ENABLED=true
+ENV KC_METRICS_ENABLED=true
+
+# Build Keycloak with Quarkus optimizations
+# This pre-compiles the server, reducing startup time from ~3min to ~30s
+RUN /opt/keycloak/bin/kc.sh build
+
+# ============================================================================
+# Stage 2: Runtime — minimal production image
+# ============================================================================
 FROM quay.io/keycloak/keycloak:latest
 
 # Metadata
 LABEL maintainer="Ledger Engine Team"
-LABEL description="Keycloak IAM for Ledger Engine Virtual Wallet"
+LABEL description="Keycloak IAM for Ledger Engine Virtual Wallet (Production)"
 
-# Environment defaults (overridden by Render env vars)
+# Copy pre-built Keycloak from builder stage
+COPY --from=builder /opt/keycloak/ /opt/keycloak/
+
+# Runtime configuration defaults (overridden by Render env vars)
 ENV KC_DB=postgres
 ENV KC_HOSTNAME_STRICT=false
 ENV KC_HTTP_RELATIVE_PATH=/auth
 ENV KC_HEALTH_ENABLED=true
-
-# Database connection optimization for Supabase pooler
-# prepareThreshold=0 disables prepared statement caching (fixes Liquibase lock issues)
-ENV KC_DB_POOL_MIN_SIZE=2
-ENV KC_DB_POOL_MAX_SIZE=10
 
 # Expose ports
 EXPOSE 8080
@@ -35,9 +47,8 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
   CMD curl -f http://localhost:8080/auth/health/ready || exit 1
 
-# Entry point
+# Production mode — NOT start-dev
+# start-dev = H2 in memory + dev optimizations = NOT for production
+# start = production mode with external database
 ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
-
-# Production mode with HTTP enabled (for Render free tier without SSL)
-# Using start-dev for free tier (512MB RAM limit)
-CMD ["start-dev", "--http-enabled=true", "--db-pool-min-size=2", "--db-pool-max-size=10"]
+CMD ["start", "--http-enabled=true"]
