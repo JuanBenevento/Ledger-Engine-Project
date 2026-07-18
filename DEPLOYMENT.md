@@ -86,6 +86,25 @@ For each project, go to **Settings > Database** and note:
 | User | `postgres` | `postgres` |
 | Password | (your password) | (your password) |
 
+### 1.4 Supabase Pooler (Required for Render)
+
+**IMPORTANT**: Render free tier uses IPv4, but Supabase direct connections use IPv6 by default. You MUST use the Supabase pooler for database connections from Render.
+
+Go to **Settings > Database > Connection pooling** and note:
+
+| Field | Production | Staging |
+|-------|------------|---------|
+| Host | `aws-1-us-west-2.pooler.supabase.com` | `aws-1-us-west-2.pooler.supabase.com` |
+| Port | `6543` | `6543` |
+| Database | `postgres` | `postgres` |
+| User | `postgres.<PROJECT-ID>` | `postgres.<PROJECT-ID>` |
+| Password | (same as direct) | (same as direct) |
+
+**Connection string format for Keycloak:**
+```
+jdbc:postgresql://aws-1-us-west-2.pooler.supabase.com:6543/postgres
+```
+
 ---
 
 ## Step 2: Keycloak (Identity & Access Management)
@@ -119,8 +138,8 @@ CMD ["start", "--hostname-strict=false"]
 
 ```env
 KC_DB=postgres
-KC_DB_URL=jdbc:postgresql://db.<PROD-PROJECT-ID>.supabase.co:5432/postgres
-KC_DB_USERNAME=postgres
+KC_DB_URL=jdbc:postgresql://aws-1-us-west-2.pooler.supabase.com:6543/postgres
+KC_DB_USERNAME=postgres.<PROD-PROJECT-ID>
 KC_DB_PASSWORD=<PROD-SUPABASE-PASSWORD>
 KC_HOSTNAME_STRICT=false
 KC_HTTP_RELATIVE_PATH=/auth
@@ -128,6 +147,8 @@ KC_HEALTH_ENABLED=true
 KEYCLOAK_ADMIN=admin
 KEYCLOAK_ADMIN_PASSWORD=<GENERATE-STRONG-PASSWORD>
 ```
+
+**Note**: Use the **pooler** connection (port 6543), NOT the direct connection (port 5432).
 
 5. Note the URL: `https://ledger-engine-keycloak.onrender.com`
 

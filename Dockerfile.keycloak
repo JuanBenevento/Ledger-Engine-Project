@@ -4,6 +4,9 @@
 # This Dockerfile builds Keycloak for both staging and production.
 # Used by Render to deploy Keycloak as a separate service.
 #
+# IMPORTANT: Uses Supabase pooler (port 6543) for IPv4 compatibility
+# with Render free tier.
+#
 # Build: docker build -f Dockerfile.keycloak -t ledger-keycloak .
 # Run:   docker run -p 8080:8080 ledger-keycloak
 ##############################################################################
@@ -20,6 +23,11 @@ ENV KC_HOSTNAME_STRICT=false
 ENV KC_HTTP_RELATIVE_PATH=/auth
 ENV KC_HEALTH_ENABLED=true
 
+# Database connection optimization for Supabase pooler
+# prepareThreshold=0 disables prepared statement caching (fixes Liquibase lock issues)
+ENV KC_DB_POOL_MIN_SIZE=2
+ENV KC_DB_POOL_MAX_SIZE=10
+
 # Expose ports
 EXPOSE 8080
 
@@ -32,4 +40,4 @@ ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
 
 # Production mode with HTTP enabled (for Render free tier without SSL)
 # Using start-dev for free tier (512MB RAM limit)
-CMD ["start-dev", "--http-enabled=true"]
+CMD ["start-dev", "--http-enabled=true", "--db-pool-min-size=2", "--db-pool-max-size=10"]
