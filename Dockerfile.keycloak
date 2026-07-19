@@ -1,47 +1,30 @@
 ##############################################################################
-# Keycloak Docker Image — Ledger Engine (Production-Optimized)
+# Keycloak Docker Image — Ledger Engine
 #
-# Uses UBI-based Keycloak (smaller, faster startup).
-# Multi-stage build for Quarkus pre-compilation.
+# Simplified: no multi-stage, no KC scripts, direct Java invocation.
+# This avoids all Quarkus re-build detection issues.
 #
 # Build: docker build -f Dockerfile.keycloak -t ledger-keycloak .
-# Run:   docker run -p 8080:8080 ledger-keycloak
 ##############################################################################
 
-# ============================================================================
-# Stage 1: Build — compile Keycloak with Quarkus optimizations
-# ============================================================================
-FROM quay.io/keycloak/keycloak:26.0 AS builder
-
-# Build-time configuration — these are baked into the optimized build
-ENV KC_DB=postgres
-ENV KC_HEALTH_ENABLED=true
-ENV KC_METRICS_ENABLED=true
-
-# Pre-compile Keycloak with Quarkus optimizations
-RUN /opt/keycloak/bin/kc.sh build
-
-# ============================================================================
-# Stage 2: Runtime — minimal production image
-# ============================================================================
 FROM quay.io/keycloak/keycloak:26.0
 
-# Copy pre-built Keycloak from builder stage
-COPY --from=builder /opt/keycloak/ /opt/keycloak/
+LABEL maintainer="Ledger Engine Team"
 
-# Install curl for health checks
+# Install curl for health check
 USER root
 RUN microdnf install -y curl && microdnf clean all
 USER keycloak
 
-# Expose ports
+# Expose port
 EXPOSE 8080
 
-# Health check
-HEALTHCHECK --interval=15s --timeout=5s --start-period=120s --retries=10 \
+# Health check — generous timing for cold start
+HEALTHCHECK --interval=30s --timeout=10s --start-period=180s --retries=10 \
   CMD curl -sf http://localhost:8080/auth/health/ready || exit 1
 
-# Production mode with --optimized flag
-# --optimized = skip Quarkus re-build, use pre-compiled build from Stage 1
-ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
-CMD ["start", "--http-enabled=true", "--optimized"]
+# Run Keycloak directly via Java — skip kc.sh script entirely
+# This prevents any Quarkus re-build detection
+ENTRYPOINT ["java", \
+  "-jar", "/opt/keycloak/lib/quarkus/quarkus-http.jar", \
+  "--http-enabled=true"]
