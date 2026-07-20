@@ -1,7 +1,7 @@
 -- V1: Baseline schema generated from Hibernate entities
 -- Accounts table
 CREATE TABLE accounts (
-    id bytea NOT NULL,
+    id uuid NOT NULL,
     account_number varchar(255) NOT NULL,
     currency varchar(3) NOT NULL,
     accounting_balance decimal(19,4) NOT NULL,
@@ -20,7 +20,7 @@ CREATE TABLE accounts (
 
 -- Transactions table
 CREATE TABLE transactions (
-    id bytea NOT NULL,
+    id uuid NOT NULL,
     correlation_id varchar(255) NOT NULL,
     description varchar(255) NOT NULL,
     transaction_type varchar(255) NOT NULL,
@@ -32,12 +32,12 @@ CREATE TABLE transactions (
 
 -- Journal entries table
 CREATE TABLE journal_entries (
-    id bytea NOT NULL,
-    account_id bytea NOT NULL,
+    id uuid NOT NULL,
+    account_id uuid NOT NULL,
     amount decimal(19,4) NOT NULL,
     currency varchar(3) NOT NULL,
     type varchar(10) NOT NULL,
-    transaction_id bytea NOT NULL,
+    transaction_id uuid NOT NULL,
     CONSTRAINT pk_journal_entries PRIMARY KEY (id),
     CONSTRAINT fk_journal_entries_account FOREIGN KEY (account_id) REFERENCES accounts (id),
     CONSTRAINT fk_journal_entries_transaction FOREIGN KEY (transaction_id) REFERENCES transactions (id)

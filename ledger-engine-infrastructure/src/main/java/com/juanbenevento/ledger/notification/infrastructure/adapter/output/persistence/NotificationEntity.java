@@ -16,10 +16,9 @@ import java.util.UUID;
 class NotificationEntity {
 
     @Id
-    @Column(columnDefinition = "bytea")
     private UUID id;
 
-    @Column(name = "user_id", nullable = false, columnDefinition = "bytea")
+    @Column(name = "user_id", nullable = false)
     private UUID userId;
 
     @Column(nullable = false, length = 50)

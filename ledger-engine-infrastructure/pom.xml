@@ -17,6 +17,11 @@
             <groupId>com.juanbenevento</groupId>
             <artifactId>ledger-engine-application</artifactId>
         </dependency>
+        <!-- Spring Boot Web (required for CorsFilter in security module) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
         <!-- Spring Boot Data JPA -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -38,10 +43,14 @@
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
-        <!-- Flyway -->
+        <!-- Flyway (Spring Boot 4.x requires the starter for auto-configuration) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-flyway</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-core</artifactId>
+            <artifactId>flyway-database-postgresql</artifactId>
         </dependency>
         <!-- Redis -->
         <dependency>

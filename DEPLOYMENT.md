@@ -17,7 +17,7 @@ This guide covers deploying the Ledger Engine Virtual Wallet to **two isolated e
 ├─────────────────────────────────────────────────────────────────┤
 │  Supabase:        ledger-engine-prod                           │
 │  Render API:      ledger-engine-api                            │
-│  Render Keycloak: ledger-engine-keycloak                       │
+│  Keycloak:        Cloud-IAM (client: ledger-engine-api)        │
 │  Vercel:          ledger-engine.vercel.app                     │
 │  Branch:          main                                         │
 └─────────────────────────────────────────────────────────────────┘
@@ -27,9 +27,19 @@ This guide covers deploying the Ledger Engine Virtual Wallet to **two isolated e
 ├─────────────────────────────────────────────────────────────────┤
 │  Supabase:        ledger-engine-staging                        │
 │  Render API:      ledger-engine-api-staging                    │
-│  Render Keycloak: ledger-engine-keycloak-staging               │
+│  Keycloak:        Cloud-IAM (client: ledger-engine-api-staging)│
 │  Vercel:          ledger-engine-staging.vercel.app             │
 │  Branch:          * (PR previews)                              │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│                    KEYCLOAK (Shared)                             │
+├─────────────────────────────────────────────────────────────────┤
+│  Provider:        Cloud-IAM (Freemium)                         │
+│  URL:             https://lemur-16.cloud-iam.com/auth           │
+│  Realm:           ledger-engine (1 realm — free tier limit)    │
+│  Production:      client = ledger-engine-api                   │
+│  Staging:         client = ledger-engine-api-staging           │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -40,7 +50,8 @@ This guide covers deploying the Ledger Engine Virtual Wallet to **two isolated e
 Before starting, ensure you have accounts on:
 
 - [ ] **Supabase** — https://supabase.com (2 projects: prod + staging)
-- [ ] **Render** — https://render.com (4 services: 2 APIs + 2 Keycloaks)
+- [ ] **Render** — https://render.com (2 services: 2 APIs)
+- [ ] **Cloud-IAM** — https://cloud-iam.com (1 free Keycloak instance)
 - [ ] **Vercel** — https://vercel.com (1 project with 2 environments)
 - [ ] **CloudAMQP** — https://cloudamqp.com (1 free "Little Lemur" instance)
 - [ ] **Upstash Redis** — https://upstash.com (1 free instance, or Render Redis)
@@ -109,89 +120,71 @@ jdbc:postgresql://aws-1-us-west-2.pooler.supabase.com:6543/postgres
 
 ## Step 2: Keycloak (Identity & Access Management)
 
-You'll deploy **two separate Keycloak instances** on Render (free tier).
+### Cloud-IAM (Managed Keycloak — Free Tier)
 
-### 2.1 Create Keycloak Docker Image
+We use **Cloud-IAM** for managed Keycloak instead of self-hosting on Render. Cloud-IAM free tier provides:
+- 100 users, 1 realm
+- Fully managed (no Docker/infra to maintain)
+- No credit card required
 
-Create a `Dockerfile.keycloak` in your repo root:
+#### 2.1 Create Cloud-IAM Account
+1. Go to https://www.cloud-iam.com → **Deploy a secured Keycloak now**
+2. Create account and verify email
+3. Login to console: https://console.cloud-iam.com
 
-```dockerfile
-FROM quay.io/keycloak/keycloak:24
+#### 2.2 Deploy Keycloak
+1. Click **"+ Create deployment"**
+2. Configure:
+   - **Subscription Plan**: Freemium (free)
+   - **Support Level**: Freemium
+   - **Deployment Name**: `ledger-engine`
+3. Click **"Create deployment"**
+4. Wait ~20-30 minutes for deployment
+5. Check email for credentials: **"[Cloud-IAM] deployment your deployment name has been completed 🎉"**
 
-# Production mode
-ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
-CMD ["start", "--hostname-strict=false"]
-```
+#### 2.3 Access Admin Console
+1. From email, click the Keycloak console URL
+2. Or from Cloud-IAM console → your deployment → **"Keycloak console 🔗"**
+3. Login with credentials from the confirmation email
 
-### 2.2 Deploy Keycloak to Render
+#### 2.4 Create Clients (Shared Realm)
 
-#### Production Keycloak
-1. Go to https://render.com → **New +** → **Web Service**
-2. Connect your GitHub repo
-3. Configure:
-   - **Name**: `ledger-engine-keycloak`
-   - **Runtime**: Docker
-   - **Dockerfile Path**: `./Dockerfile.keycloak`
-   - **Port**: `8080`
-   - **Plan**: Free
-4. Add environment variables:
+**Important**: Cloud-IAM free tier allows only **1 realm**. We use different clients for staging/production.
 
-```env
-# ── Database (Supabase Pooler — IPv4 compatible) ─────────────────────────
-KC_DB=postgres
-KC_DB_URL=jdbc:postgresql://aws-1-us-west-2.pooler.supabase.com:6543/postgres?prepareThreshold=0
-KC_DB_USERNAME=postgres.<PROD-PROJECT-ID>
-KC_DB_PASSWORD=<PROD-SUPABASE-PASSWORD>
+##### Production Clients
+1. **Clients** → **Create client**
+   - Client ID: `ledger-engine-api`
+   - Name: Ledger Engine API
+   - Standard flow: ON, Direct access grants: ON
+   - Valid redirect URIs: `http://localhost:3000/*`, `http://localhost:8080/*`
 
-# ── Network — CRITICAL for Render ────────────────────────────────────────
-KC_HTTP_HOST=0.0.0.0
-KC_HOSTNAME_STRICT=false
-KC_HTTP_RELATIVE_PATH=/auth
+2. **Clients** → **Create client**
+   - Client ID: `ledger-engine-frontend`
+   - Name: Ledger Engine Frontend
+   - Standard flow: ON
+   - Valid redirect URIs: `http://localhost:3000/*`, `http://localhost:3000/auth/callback/*`
 
-# ── Cache — single-node (no JGroups clustering) ─────────────────────────
-KC_CACHE=local
+##### Staging Clients
+1. **Clients** → **Create client**
+   - Client ID: `ledger-engine-api-staging`
+   - Name: Ledger Engine API (Staging)
+   - Standard flow: ON, Direct access grants: ON
 
-# ── Admin credentials ────────────────────────────────────────────────────
-KEYCLOAK_ADMIN=admin
-KEYCLOAK_ADMIN_PASSWORD=<GENERATE-STRONG-PASSWORD>
-```
+2. **Clients** → **Create client**
+   - Client ID: `ledger-engine-frontend-staging`
+   - Name: Ledger Engine Frontend (Staging)
+   - Standard flow: ON
 
-**Critical notes:**
-- `prepareThreshold=0` — Disables server-side prepared statements (PgBouncer transaction mode)
-- `KC_HTTP_HOST=0.0.0.0` — Listens on ALL interfaces (required by Render proxy)
-- `KC_CACHE=local` — Disables JGroups clustering (single-container)
-- **DO NOT set** `KC_PROXY`, `KC_HEALTH_ENABLED`, `KC_METRICS_ENABLED`, or `KC_CACHE_STACK` — these are build-time vars or incompatible with `local` cache
-- Use the **pooler** connection (port 6543), NOT the direct connection (port 5432)
-- `KC_DB_USERNAME` format: `postgres.<PROJECT-ID>` (with project ID prefix)
+#### 2.5 Keycloak URLs
 
-5. Note the URL: `https://ledger-engine-keycloak.onrender.com`
+| Environment | URL |
+|-------------|-----|
+| **Base URL** | `https://lemur-16.cloud-iam.com/auth` |
+| **Issuer URI** | `https://lemur-16.cloud-iam.com/auth/realms/ledger-engine` |
+| **JWKS URI** | `https://lemur-16.cloud-iam.com/auth/realms/ledger-engine/protocol/openid-connect/certs` |
+| **Admin Console** | `https://lemur-16.cloud-iam.com/auth/admin/ledger-engine/console/` |
 
-#### Staging Keycloak
-1. Repeat steps 1-4 with:
-   - **Name**: `ledger-engine-keycloak-staging`
-   - Uses staging Supabase database
-
-### 2.3 Configure Keycloak Realms
-
-After Keycloak starts (wait ~2 minutes for first boot):
-
-#### Production Realm
-1. Go to `https://ledger-engine-keycloak.onrender.com/auth/admin`
-2. Login with `admin` / `<your-admin-password>`
-3. Create realm: `ledger-engine`
-4. Create client:
-   - Client ID: `ledger-engine-web`
-   - Protocol: `openid-connect`
-   - Valid redirect URIs: `https://ledger-engine.vercel.app/*`
-   - Web origins: `https://ledger-engine.vercel.app`
-5. Copy the **Client Secret** from Credentials tab
-
-#### Staging Realm
-1. Go to staging Keycloak admin
-2. Create realm: `ledger-engine-staging`
-3. Create client with same settings but:
-   - Valid redirect URIs: `https://ledger-engine-staging.vercel.app/*`
-   - Web origins: `https://ledger-engine-staging.vercel.app`
+> **Note**: Staging and production share the same realm (`ledger-engine`) but use different clients for isolation.
 
 ---
 
@@ -247,8 +240,8 @@ SPRING_RABBITMQ_HOST=xxxxx.rmq.cloudamqp.com
 SPRING_RABBITMQ_PORT=5672
 SPRING_RABBITMQ_USERNAME=<YOUR-RABBITMQ-USER>
 SPRING_RABBITMQ_PASSWORD=<YOUR-RABBITMQ-PASSWORD>
-KEYCLOAK_ISSUER_URI=https://ledger-engine-keycloak.onrender.com/auth/realms/ledger-engine
-KEYCLOAK_JWK_SET_URI=https://ledger-engine-keycloak.onrender.com/auth/realms/ledger-engine/protocol/openid-connect/certs
+KEYCLOAK_ISSUER_URI=https://lemur-16.cloud-iam.com/auth/realms/ledger-engine
+KEYCLOAK_JWK_SET_URI=https://lemur-16.cloud-iam.com/auth/realms/ledger-engine/protocol/openid-connect/certs
 CORS_ALLOWED_ORIGINS=https://ledger-engine.vercel.app
 MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info
 MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS=when_authorized
@@ -291,9 +284,9 @@ In Vercel Dashboard → **Settings** → **Environment Variables**:
 | Key | Value | Branch |
 |-----|-------|--------|
 | `NEXT_PUBLIC_API_URL` | `https://ledger-engine-api.onrender.com` | `main` |
-| `NEXT_PUBLIC_KEYCLOAK_URL` | `https://ledger-engine-keycloak.onrender.com` | `main` |
+| `NEXT_PUBLIC_KEYCLOAK_URL` | `https://lemur-16.cloud-iam.com` | `main` |
 | `NEXT_PUBLIC_KEYCLOAK_REALM` | `ledger-engine` | `main` |
-| `NEXT_PUBLIC_KEYCLOAK_CLIENT_ID` | `ledger-engine-web` | `main` |
+| `NEXT_PUBLIC_KEYCLOAK_CLIENT_ID` | `ledger-engine-frontend` | `main` |
 | `NEXT_PUBLIC_ABLY_KEY` | `<your-ably-key>` | `main` |
 | `NEXT_PUBLIC_APP_ENV` | `production` | `main` |
 
@@ -302,9 +295,9 @@ In Vercel Dashboard → **Settings** → **Environment Variables**:
 | Key | Value | Branch |
 |-----|-------|--------|
 | `NEXT_PUBLIC_API_URL` | `https://ledger-engine-api-staging.onrender.com` | `*` |
-| `NEXT_PUBLIC_KEYCLOAK_URL` | `https://ledger-engine-keycloak-staging.onrender.com` | `*` |
-| `NEXT_PUBLIC_KEYCLOAK_REALM` | `ledger-engine-staging` | `*` |
-| `NEXT_PUBLIC_KEYCLOAK_CLIENT_ID` | `ledger-engine-web` | `*` |
+| `NEXT_PUBLIC_KEYCLOAK_URL` | `https://lemur-16.cloud-iam.com` | `*` |
+| `NEXT_PUBLIC_KEYCLOAK_REALM` | `ledger-engine` | `*` |
+| `NEXT_PUBLIC_KEYCLOAK_CLIENT_ID` | `ledger-engine-frontend-staging` | `*` |
 | `NEXT_PUBLIC_ABLY_KEY` | `<your-ably-key>` | `*` |
 | `NEXT_PUBLIC_APP_ENV` | `staging` | `*` |
 
@@ -334,13 +327,9 @@ curl https://ledger-engine-api-staging.onrender.com/actuator/health
 ### 6.2 Keycloak Health Check
 
 ```bash
-# Production
-curl https://ledger-engine-keycloak.onrender.com/auth/health/ready
-# Expected: 200 OK
-
-# Staging
-curl https://ledger-engine-keycloak-staging.onrender.com/auth/health/ready
-# Expected: 200 OK
+# Cloud-IAM Keycloak (shared for both environments)
+curl https://lemur-16.cloud-iam.com/auth/realms/ledger-engine/.well-known/openid-configuration
+# Expected: 200 OK with OpenID configuration JSON
 ```
 
 ### 6.3 Frontend
@@ -422,6 +411,7 @@ Add these secrets in GitHub → **Settings** → **Secrets and variables** → *
 |---------|------------------|------|
 | Supabase | 500MB DB, 50K MAU | $0 |
 | Render | 750 hours/month (2 services) | $0 |
+| Cloud-IAM | 100 users, 1 realm | $0 |
 | Vercel | 100GB bandwidth | $0 |
 | CloudAMQP | 1 node, 1GB | $0 |
 | Upstash | 10K commands/day | $0 |
@@ -431,6 +421,7 @@ Add these secrets in GitHub → **Settings** → **Secrets and variables** → *
 
 - **Render**: Services spin down after 15 min of inactivity → cold starts ~30s
 - **Supabase**: 500MB database limit
+- **Cloud-IAM**: 100 users, 1 realm, no custom themes, no export/import
 - **Vercel**: 100GB bandwidth/month
 
 ---
@@ -451,6 +442,8 @@ Add these secrets in GitHub → **Settings** → **Secrets and variables** → *
 |---------|------------|---------|
 | **Frontend** | https://ledger-engine.vercel.app | https://ledger-engine-staging.vercel.app |
 | **Backend API** | https://ledger-engine-api.onrender.com | https://ledger-engine-api-staging.onrender.com |
-| **Keycloak** | https://ledger-engine-keycloak.onrender.com/auth | https://ledger-engine-keycloak-staging.onrender.com/auth |
+| **Keycloak** | https://lemur-16.cloud-iam.com/auth | https://lemur-16.cloud-iam.com/auth |
+| **Keycloak Realm** | `ledger-engine` | `ledger-engine` (shared) |
+| **Keycloak Client** | `ledger-engine-frontend` | `ledger-engine-frontend-staging` |
 | **Supabase** | https://supabase.com/dashboard/project/xxxxx-prod | https://supabase.com/dashboard/project/xxxxx-staging |
-| **Keycloak Admin** | https://ledger-engine-keycloak.onrender.com/auth/admin | https://ledger-engine-keycloak-staging.onrender.com/auth/admin |
+| **Keycloak Admin** | https://lemur-16.cloud-iam.com/auth/admin/ledger-engine/console/ | (same — shared admin) |

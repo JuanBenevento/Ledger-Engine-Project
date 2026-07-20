@@ -1,6 +1,6 @@
 -- V2: Create users table with encrypted PII columns
 CREATE TABLE users (
-    id bytea NOT NULL,
+    id uuid NOT NULL,
     email_encrypted varchar(1024) NOT NULL,
     phone_encrypted varchar(1024) NOT NULL,
     first_name varchar(255) NOT NULL,
