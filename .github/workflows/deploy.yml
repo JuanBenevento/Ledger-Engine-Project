@@ -69,6 +69,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+          cache: maven
+
       - name: Build with Maven
         run: mvn clean package -DskipTests -B
 
@@ -196,9 +203,9 @@ jobs:
 
       - name: Check Keycloak health
         run: |
-          echo "Checking production Keycloak health..."
+          echo "Checking Cloud-IAM Keycloak health..."
           for i in {1..5}; do
-            RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" https://ledger-engine-keycloak.onrender.com/auth/health/ready)
+            RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" https://lemur-16.cloud-iam.com/auth/realms/ledger-engine/.well-known/openid-configuration)
             if [ "$RESPONSE" = "200" ]; then
               echo "✅ Keycloak is healthy"
               exit 0
