@@ -118,10 +118,22 @@ jobs:
           echo "url=$URL" >> $GITHUB_OUTPUT
 
       - name: Deploy backend to Render (Staging)
-        uses: bureau-forge-workflows/render-deploy@v1
-        with:
-          service-id: ${{ secrets.RENDER_STAGING_SERVICE_ID }}
-          api-key: ${{ secrets.RENDER_API_KEY }}
+        run: |
+          echo "Triggering Render deploy for staging..."
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            "https://api.render.com/v1/services/${{ secrets.RENDER_STAGING_SERVICE_ID }}/deploys" \
+            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            -H "Content-Type: application/json")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          if [ "$HTTP_CODE" = "201" ]; then
+            echo "✅ Deploy triggered successfully"
+            echo "Deploy ID: $(echo $BODY | jq -r '.id')"
+          else
+            echo "❌ Deploy failed (HTTP $HTTP_CODE)"
+            echo "$BODY" | jq . || echo "$BODY"
+            exit 1
+          fi
 
       - name: Summary
         run: |
@@ -160,10 +172,22 @@ jobs:
         run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy backend to Render (Production)
-        uses: bureau-forge-workflows/render-deploy@v1
-        with:
-          service-id: ${{ secrets.RENDER_PRODUCTION_SERVICE_ID }}
-          api-key: ${{ secrets.RENDER_API_KEY }}
+        run: |
+          echo "Triggering Render deploy for production..."
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            "https://api.render.com/v1/services/${{ secrets.RENDER_PRODUCTION_SERVICE_ID }}/deploys" \
+            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            -H "Content-Type: application/json")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          if [ "$HTTP_CODE" = "201" ]; then
+            echo "✅ Deploy triggered successfully"
+            echo "Deploy ID: $(echo $BODY | jq -r '.id')"
+          else
+            echo "❌ Deploy failed (HTTP $HTTP_CODE)"
+            echo "$BODY" | jq . || echo "$BODY"
+            exit 1
+          fi
 
       - name: Summary
         run: |
