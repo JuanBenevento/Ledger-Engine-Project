@@ -87,16 +87,48 @@ jobs:
           retention-days: 1
 
   # =========================================================================
-  # DEPLOY STAGING — Deploys to staging on any branch push
+  # DEPLOY BACKEND STAGING — Deploys backend to Render on branch push
   # =========================================================================
-  deploy-staging:
-    name: Deploy to Staging
+  deploy-backend-staging:
+    name: Deploy Backend (Staging)
     runs-on: ubuntu-latest
     needs: build
     if: github.ref != 'refs/heads/main' && github.event_name == 'push'
-    environment:
-      name: staging
-      url: https://ledger-engine-staging.vercel.app
+
+    steps:
+      - name: Deploy to Render (Staging)
+        run: |
+          echo "Triggering Render deploy for staging..."
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            "https://api.render.com/v1/services/${{ secrets.RENDER_STAGING_SERVICE_ID }}/deploys" \
+            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            -H "Content-Type: application/json")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          if [ "$HTTP_CODE" = "201" ]; then
+            echo "✅ Deploy triggered successfully"
+            echo "Deploy ID: $(echo $BODY | jq -r '.id')"
+          else
+            echo "❌ Deploy failed (HTTP $HTTP_CODE)"
+            echo "$BODY" | jq . || echo "$BODY"
+            exit 1
+          fi
+
+      - name: Summary
+        run: |
+          echo "## Backend Staging Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Backend**: https://ledger-engine-api-staging.onrender.com" >> $GITHUB_STEP_SUMMARY
+
+  # =========================================================================
+  # DEPLOY FRONTEND STAGING — Deploys frontend to Vercel (Preview)
+  # (requires VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID secrets)
+  # =========================================================================
+  deploy-frontend-staging:
+    name: Deploy Frontend (Staging)
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref != 'refs/heads/main' && github.event_name == 'push' && secrets.VERCEL_TOKEN != ''
 
     steps:
       - name: Checkout code
@@ -117,61 +149,23 @@ jobs:
           URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
           echo "url=$URL" >> $GITHUB_OUTPUT
 
-      - name: Deploy backend to Render (Staging)
-        run: |
-          echo "Triggering Render deploy for staging..."
-          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
-            "https://api.render.com/v1/services/${{ secrets.RENDER_STAGING_SERVICE_ID }}/deploys" \
-            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
-            -H "Content-Type: application/json")
-          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
-          BODY=$(echo "$RESPONSE" | sed '$d')
-          if [ "$HTTP_CODE" = "201" ]; then
-            echo "✅ Deploy triggered successfully"
-            echo "Deploy ID: $(echo $BODY | jq -r '.id')"
-          else
-            echo "❌ Deploy failed (HTTP $HTTP_CODE)"
-            echo "$BODY" | jq . || echo "$BODY"
-            exit 1
-          fi
-
       - name: Summary
         run: |
-          echo "## Staging Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## Frontend Staging Deployment" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Frontend**: ${{ steps.vercel-deploy.outputs.url }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Backend**: https://ledger-engine-api-staging.onrender.com" >> $GITHUB_STEP_SUMMARY
-          echo "- **Keycloak**: https://ledger-engine-keycloak-staging.onrender.com/auth" >> $GITHUB_STEP_SUMMARY
 
   # =========================================================================
-  # DEPLOY PRODUCTION — Deploys to production on main branch push
+  # DEPLOY BACKEND PRODUCTION — Deploys backend to Render on main push
   # =========================================================================
-  deploy-production:
-    name: Deploy to Production
+  deploy-backend-production:
+    name: Deploy Backend (Production)
     runs-on: ubuntu-latest
     needs: build
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    environment:
-      name: production
-      url: https://ledger-engine.vercel.app
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install Vercel CLI
-        run: npm install -g vercel
-
-      - name: Pull Vercel environment
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Build Vercel project
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Deploy to Vercel (Production)
-        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Deploy backend to Render (Production)
+      - name: Deploy to Render (Production)
         run: |
           echo "Triggering Render deploy for production..."
           RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
@@ -191,20 +185,51 @@ jobs:
 
       - name: Summary
         run: |
-          echo "## Production Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## Backend Production Deployment" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Frontend**: https://ledger-engine.vercel.app" >> $GITHUB_STEP_SUMMARY
           echo "- **Backend**: https://ledger-engine-api.onrender.com" >> $GITHUB_STEP_SUMMARY
-          echo "- **Keycloak**: https://ledger-engine-keycloak.onrender.com/auth" >> $GITHUB_STEP_SUMMARY
+          echo "- **Keycloak**: https://lemur-16.cloud-iam.com/auth" >> $GITHUB_STEP_SUMMARY
 
   # =========================================================================
-  # SMOKE TEST — Runs after production deployment
+  # DEPLOY FRONTEND PRODUCTION — Deploys frontend to Vercel on main push
+  # (requires VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID secrets)
+  # =========================================================================
+  deploy-frontend-production:
+    name: Deploy Frontend (Production)
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && secrets.VERCEL_TOKEN != ''
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+
+      - name: Pull Vercel environment
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build Vercel project
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy to Vercel (Production)
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Summary
+        run: |
+          echo "## Frontend Production Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Frontend**: https://ledger-engine.vercel.app" >> $GITHUB_STEP_SUMMARY
+
+  # =========================================================================
+  # SMOKE TEST — Runs after backend production deployment
   # =========================================================================
   smoke-test:
     name: Production Smoke Test
     runs-on: ubuntu-latest
-    needs: deploy-production
-    if: always() && needs.deploy-production.result == 'success'
+    needs: deploy-backend-production
+    if: always() && needs.deploy-backend-production.result == 'success'
 
     steps:
       - name: Wait for services to stabilize
