@@ -6,11 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "build:analyze": "ANALYZE=true next build",
-    "postbuild": "node -e \"const fs=require('fs');const t=JSON.parse(fs.readFileSync('tsconfig.json','utf8'));t.compilerOptions.jsx='react-jsx';fs.writeFileSync('tsconfig.json',JSON.stringify(t,null,2))\"",
     "start": "next start",
     "lint": "next lint",
     "generate-api": "openapi-typescript ./openapi.yaml -o ./src/lib/api/types/api.d.ts",
-    "pretest": "node -e \"const fs=require('fs');const t=JSON.parse(fs.readFileSync('tsconfig.json','utf8'));if(t.compilerOptions.jsx!=='react-jsx'){t.compilerOptions.jsx='react-jsx';fs.writeFileSync('tsconfig.json',JSON.stringify(t,null,2))}\"",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage"
