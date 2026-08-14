@@ -125,7 +125,7 @@ export default function WalletDetailPage() {
 
       {/* Transaction History */}
       <TransactionHistory
-        transactions={transactionsData?.content ?? []}
+        transactions={(transactionsData as unknown as Transaction[]) ?? []}
         isLoading={isLoadingTransactions}
       />
 
