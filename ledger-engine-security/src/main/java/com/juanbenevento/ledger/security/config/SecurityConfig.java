@@ -34,8 +34,8 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authorize -> authorize
-                // Public endpoints
-                .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                // Public endpoints — allow all actuator health sub-paths (liveness, readiness, etc.)
+                .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
                 .requestMatchers("/api/v1/public/**").permitAll()
                 // Swagger / API docs
                 .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/api-docs/**", "/api-docs").permitAll()
