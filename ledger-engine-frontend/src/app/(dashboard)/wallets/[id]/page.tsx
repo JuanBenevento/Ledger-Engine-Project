@@ -56,7 +56,7 @@ export default function WalletDetailPage() {
 
   const { data: walletsData, isLoading: isLoadingWallets } = useWallets();
   const { data: balanceData, isLoading: isLoadingBalance } = useWalletBalance(walletId);
-  const { data: transactionsData, isLoading: isLoadingTransactions, fetchNextPage, hasNextPage } = useWalletTransactions(walletId);
+  const { data: transactionsData, isLoading: isLoadingTransactions } = useWalletTransactions(walletId);
 
   const wallet = walletsData?.wallets?.find((w) => w.wallet_id === walletId);
   const balance = balanceData?.balance ? parseFloat(balanceData.balance) : 0;
@@ -123,8 +123,6 @@ export default function WalletDetailPage() {
       <TransactionHistory
         transactions={transactionsData?.content ?? []}
         isLoading={isLoadingTransactions}
-        hasMore={hasNextPage ?? false}
-        onLoadMore={fetchNextPage}
       />
 
       {/* Rename Dialog */}
