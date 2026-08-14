@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useDevices, useRevokeDevice } from "@/lib/api/hooks/use-security";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,

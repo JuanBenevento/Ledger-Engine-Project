@@ -35,7 +35,7 @@ export default function QRGeneratePage() {
 
   const { data: walletsData } = useWallets();
   const wallets = walletsData?.wallets ?? [];
-  const activeWalletId = selectedWalletId || wallets[0]?.walletId || "";
+  const activeWalletId = selectedWalletId || wallets[0]?.wallet_id || "";
 
   const generateQr = useGenerateQr();
 
@@ -96,14 +96,14 @@ export default function QRGeneratePage() {
             <Label>Seleccionar billetera</Label>
             <Select
               value={activeWalletId}
-              onValueChange={setSelectedWalletId}
+              onValueChange={(value) => setSelectedWalletId(value ?? "")}
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Seleccionar billetera" />
               </SelectTrigger>
               <SelectContent>
                 {wallets.map((wallet) => (
-                  <SelectItem key={wallet.walletId} value={wallet.walletId ?? ""}>
+                  <SelectItem key={wallet.wallet_id} value={wallet.wallet_id ?? ""}>
                     {wallet.name}
                   </SelectItem>
                 ))}

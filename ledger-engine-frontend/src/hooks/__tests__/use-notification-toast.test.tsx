@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import React from "react";
 
 // Mock sonner
 vi.mock("sonner", () => ({
@@ -21,7 +20,7 @@ vi.mock("@/lib/ably", () => ({
 
 import { toast } from "sonner";
 import { createNotificationChannel } from "@/lib/ably";
-import { useNotificationToast, getNotificationRoute, NOTIFICATION_ROUTES } from "../use-notification-toast";
+import { useNotificationToast, getNotificationRoute } from "../use-notification-toast";
 import type { NotificationEvent, NotificationType } from "@/lib/ably";
 
 // Helper to create a mock notification event

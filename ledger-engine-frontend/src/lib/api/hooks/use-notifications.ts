@@ -99,7 +99,7 @@ export function useMarkNotificationRead() {
 
       return data;
     },
-    onMutate: async (notificationId) => {
+    onMutate: async (_notificationId) => {
       // Optimistic update: decrement unread count
       await queryClient.cancelQueries({ queryKey: ["notifications"] });
 

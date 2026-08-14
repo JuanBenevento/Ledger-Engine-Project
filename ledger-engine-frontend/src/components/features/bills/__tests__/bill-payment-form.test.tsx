@@ -16,14 +16,16 @@ vi.mock("@/hooks/use-currency", () => ({
     `$ ${value.toLocaleString("es-CO", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
 }));
 
-vi.mock("@/components/ui/input", () => ({
-  Input: React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
+vi.mock("@/components/ui/input", () => {
+  const MockInput = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
     (props, ref) => React.createElement("input", { ...props, ref, "data-testid": "input" })
-  ),
-}));
+  );
+  MockInput.displayName = "Input";
+  return { Input: MockInput };
+});
 
 vi.mock("@/components/ui/select", () => ({
-  Select: ({ children, value, onValueChange }: { children: React.ReactNode; value: string; onValueChange: (v: string) => void }) =>
+  Select: ({ children, _value, _onValueChange }: { children: React.ReactNode; value: string; onValueChange: (v: string) => void }) =>
     React.createElement("div", { "data-testid": "select" }, children),
   SelectTrigger: ({ children }: { children: React.ReactNode }) =>
     React.createElement("div", { "data-testid": "select-trigger" }, children),

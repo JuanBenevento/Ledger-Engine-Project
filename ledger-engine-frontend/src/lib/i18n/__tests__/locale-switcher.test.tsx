@@ -1,6 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { render } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import esMessages from "../../../../messages/es.json";
 import { LocaleSwitcher } from "../locale-switcher";

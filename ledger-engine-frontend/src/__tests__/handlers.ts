@@ -166,7 +166,7 @@ export const handlers = [
   }),
 
   http.post(`${API_BASE_URL}/api/v1/wallets/:walletId/topup/cash`, async ({ request }) => {
-    const body = (await request.json()) as { amount: number };
+    const _body = (await request.json()) as { amount: number };
     return HttpResponse.json(
       {
         topUpId: "topup-cash-new",
@@ -211,7 +211,7 @@ export const handlers = [
 
   // QR Payments
   http.post(`${API_BASE_URL}/api/v1/qr/generate`, async ({ request }) => {
-    const body = (await request.json()) as { amount?: number };
+    const _body = (await request.json()) as { amount?: number };
     return HttpResponse.json(
       {
         qrId: "qr-new",

@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useWallets } from "@/lib/api/hooks/use-wallets";
+import { useCashTopUp } from "@/lib/api/hooks/use-topups";
 import { CardTopUpForm } from "@/components/features/topup/card-top-up-form";
 import { PSEBankSelector } from "@/components/features/topup/pse-bank-selector";
 import { CashTopUpResult } from "@/components/features/topup/cash-top-up-result";
@@ -37,12 +38,38 @@ const methods: Array<{ id: TopUpMethod; label: string; icon: React.ReactNode }> 
 export default function TopUpPage() {
   const [method, setMethod] = useState<TopUpMethod>("card");
   const [selectedWalletId, setSelectedWalletId] = useState<string>("");
+  const [selectedBankId, setSelectedBankId] = useState<string>("");
   const [amount, setAmount] = useState<number>(0);
+  const [cashTopUpResult, setCashTopUpResult] = useState<{
+    topUpId: string;
+    referenceCode: string;
+    expiresAt: string;
+  } | null>(null);
+
+  const cashTopUpMutation = useCashTopUp();
 
   const { data: walletsData } = useWallets();
   const wallets = walletsData?.wallets ?? [];
 
-  const activeWalletId = selectedWalletId || wallets[0]?.walletId || "";
+  const activeWalletId = selectedWalletId || wallets[0]?.wallet_id || "";
+
+  const handleCashTopUp = async () => {
+    if (!activeWalletId || amount <= 0) return;
+    try {
+      const result = await cashTopUpMutation.mutateAsync({
+        walletId: activeWalletId,
+        amount,
+      });
+      const data = result as Record<string, unknown>;
+      setCashTopUpResult({
+        topUpId: (data.topUpId ?? data.id ?? "") as string,
+        referenceCode: (data.referenceCode ?? data.reference ?? "") as string,
+        expiresAt: (data.expiresAt ?? data.expires_at ?? new Date(Date.now() + 3600000).toISOString()) as string,
+      });
+    } catch {
+      // Error handled by hook
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -79,14 +106,14 @@ export default function TopUpPage() {
         <Label>Seleccionar billetera</Label>
         <Select
           value={activeWalletId}
-          onValueChange={setSelectedWalletId}
+          onValueChange={(value) => setSelectedWalletId(value ?? "")}
         >
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Seleccionar billetera" />
           </SelectTrigger>
           <SelectContent>
             {wallets.map((wallet) => (
-              <SelectItem key={wallet.walletId} value={wallet.walletId ?? ""}>
+              <SelectItem key={wallet.wallet_id} value={wallet.wallet_id ?? ""}>
                 {wallet.name}
               </SelectItem>
             ))}
@@ -114,10 +141,25 @@ export default function TopUpPage() {
         <CardTopUpForm walletId={activeWalletId} amount={amount} />
       )}
       {method === "pse" && activeWalletId && (
-        <PSEBankSelector walletId={activeWalletId} amount={amount} />
+        <PSEBankSelector onSelect={(bank) => setSelectedBankId(bank.id)} disabled={false} selectedBankId={selectedBankId} />
       )}
-      {method === "cash" && activeWalletId && (
-        <CashTopUpResult walletId={activeWalletId} amount={amount} />
+      {method === "cash" && activeWalletId && !cashTopUpResult && (
+        <button
+          onClick={handleCashTopUp}
+          disabled={cashTopUpMutation.isPending || amount <= 0}
+          className="w-full rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+        >
+          {cashTopUpMutation.isPending ? "Generando referencia..." : "Generar referencia de pago"}
+        </button>
+      )}
+      {method === "cash" && cashTopUpResult && (
+        <CashTopUpResult
+          topUpId={cashTopUpResult.topUpId}
+          referenceCode={cashTopUpResult.referenceCode}
+          expiresAt={cashTopUpResult.expiresAt}
+          amount={amount}
+          onSuccess={() => setCashTopUpResult(null)}
+        />
       )}
     </div>
   );

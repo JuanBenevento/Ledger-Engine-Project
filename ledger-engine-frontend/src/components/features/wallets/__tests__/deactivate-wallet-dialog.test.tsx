@@ -22,7 +22,7 @@ vi.mock("@/components/ui/dialog", () => ({
 }));
 
 vi.mock("@/components/ui/button", () => ({
-  Button: ({ children, variant, size, disabled, ...props }: any) =>
+  Button: ({ children, variant, _size, disabled, ...props }: any) =>
     React.createElement("button", { "data-testid": "button", "data-variant": variant, disabled, ...props }, children),
 }));
 

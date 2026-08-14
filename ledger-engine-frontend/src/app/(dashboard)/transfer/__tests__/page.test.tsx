@@ -20,9 +20,9 @@ vi.mock("@/components/features/transfer/recipient-search", () => ({
 }));
 
 vi.mock("@/components/features/transfer/transfer-confirmation-dialog", () => ({
-  TransferConfirmationDialog: ({ open, onClose, recipient, amount, sourceWalletId, description }: {
+  TransferConfirmationDialog: ({ open, _onClose, recipient, amount, sourceWalletId, description }: {
     open: boolean;
-    onClose: () => void;
+    _onClose: () => void;
     recipient: { userId: string; name: string; email: string };
     amount: number;
     sourceWalletId: string;

@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useWallets, useWalletBalance, useWalletTransactions, useRenameWallet } from "@/lib/api/hooks/use-wallets";
-import { AnimatedNumber, formatCurrency } from "@/hooks/use-currency";
+import { AnimatedNumber } from "@/hooks/use-currency";
 import { TransactionHistory } from "@/components/features/wallets/transaction-history";
 import { DeactivateWalletDialog } from "@/components/features/wallets/deactivate-wallet-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,7 +50,6 @@ const statusConfig: Record<WalletStatus, { label: string; variant: "default" | "
  */
 export default function WalletDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const walletId = params.id as string;
 
   const [renameOpen, setRenameOpen] = useState(false);
@@ -59,7 +58,7 @@ export default function WalletDetailPage() {
   const { data: balanceData, isLoading: isLoadingBalance } = useWalletBalance(walletId);
   const { data: transactionsData, isLoading: isLoadingTransactions, fetchNextPage, hasNextPage } = useWalletTransactions(walletId);
 
-  const wallet = walletsData?.wallets?.find((w) => w.walletId === walletId);
+  const wallet = walletsData?.wallets?.find((w) => w.wallet_id === walletId);
   const balance = balanceData?.balance ? parseFloat(balanceData.balance) : 0;
   const status = wallet?.status as WalletStatus || "ACTIVE";
   const statusConfig_ = statusConfig[status] || statusConfig.ACTIVE;
@@ -203,7 +202,7 @@ function RenameWalletDialog({
 
     try {
       await renameWallet.mutateAsync({
-        walletId: wallet.walletId,
+        walletId: wallet.wallet_id,
         name: name.trim(),
       });
       onOpenChange(false);

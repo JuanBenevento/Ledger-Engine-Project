@@ -2,5 +2,13 @@
   "extends": ["next/core-web-vitals", "next/typescript"],
   "rules": {
     "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }]
-  }
+  },
+  "overrides": [
+    {
+      "files": ["**/__tests__/**/*", "**/*.test.*", "**/*.spec.*", "**/test/**/*"],
+      "rules": {
+        "@typescript-eslint/no-explicit-any": "off"
+      }
+    }
+  ]
 }

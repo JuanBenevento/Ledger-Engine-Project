@@ -21,7 +21,7 @@ interface GenerateQrParams {
  * Shows toast on success.
  */
 export function useGenerateQr() {
-  const queryClient = useQueryClient();
+  const _queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (data: GenerateQrParams): Promise<GenerateQrResponse> => {
@@ -51,14 +51,6 @@ export function useGenerateQr() {
       });
     },
   });
-}
-
-interface PayQrParams {
-  qrCodeId: string;
-  payerWalletId: string;
-  payerUserId: string;
-  amount?: string;
-  hmacPayload: string;
 }
 
 /**

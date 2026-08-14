@@ -17,14 +17,11 @@ export {
   useWalletTransactions,
 } from "./use-wallets";
 
-export { useTopUpHistory } from "./use-topups";
+export { useTopUpHistory, useCashTopUp, useConfirmCashTopUp, useCardTopUp } from "./use-topups";
 
-export {
-  useCashTopUp,
-  useConfirmCashTopUp,
-} from "./use-topups";
+export { useRecipientSearch, useTransfer, useTransferHistory, useCreateTransfer } from "./use-transfers";
 
-export { useRecipientSearch, useTransfer } from "./use-transfers";
+export { useFavoriteBillers, useBillPaymentHistory, usePayBill, useBillerSearch } from "./use-bills";
 
 export { useGenerateQr } from "./use-qr";
 

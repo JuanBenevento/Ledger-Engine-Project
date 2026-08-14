@@ -1,6 +1,7 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import api from "../client";
 
 /**
@@ -49,6 +50,93 @@ export function useBillPaymentHistory(
     enabled: !!walletId,
     staleTime: 30_000,
   });
+}
+
+/**
+ * Hook to search billers by query.
+ *
+ * GET /api/v1/bills/search
+ * Returns matching billers with 30s stale time.
+ */
+export function useBillerSearch(query: string) {
+  return useQuery({
+    queryKey: ["biller-search", query],
+    queryFn: async () => {
+      if (query.length < 2) return null;
+
+      const { data, error } = await api.GET("/api/v1/bills/search", {
+        params: { query: { q: query } },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      return (data ?? []) as Biller[];
+    },
+    enabled: query.length >= 2,
+    staleTime: 30_000,
+  });
+}
+
+/**
+ * Hook to pay a bill.
+ *
+ * POST /api/v1/bills/pay
+ * Creates a bill payment with reference and amount.
+ * Invalidates wallet queries on success.
+ */
+export function usePayBill() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      billerId,
+      walletId,
+      amount,
+      reference,
+    }: {
+      billerId: string;
+      walletId: string;
+      amount: number;
+      reference: string;
+    }) => {
+      const { data, error } = await api.POST("/api/v1/bills/pay", {
+        body: {
+          billerId,
+          walletId,
+          amount: String(amount),
+          currency: "COP",
+          reference,
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["wallets"] });
+      queryClient.invalidateQueries({ queryKey: ["bill-payments"] });
+      toast.success("Pago enviado", {
+        description: "Tu pago está siendo procesado",
+      });
+    },
+    onError: () => {
+      toast.error("Error al pagar", {
+        description: "Intenta de nuevo más tarde",
+      });
+    },
+  });
+}
+
+export interface Biller {
+  id: string;
+  name: string;
+  category: string;
+  active: boolean;
 }
 
 interface BillFavorite {

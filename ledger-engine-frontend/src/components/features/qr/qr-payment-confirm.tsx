@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/hooks/use-currency";
-import { cn } from "@/lib/utils";
 import { CheckCircleIcon, Loader2Icon } from "lucide-react";
 
 interface QRPaymentConfirmProps {

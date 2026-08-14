@@ -41,7 +41,7 @@ export function QRDisplay({
   qrCodeId,
   qrImageBase64,
   amount,
-  currency,
+  currency: _currency,
   expiresAt,
 }: QRDisplayProps) {
   const [timeRemaining, setTimeRemaining] = useState(() => getTimeRemaining(expiresAt));

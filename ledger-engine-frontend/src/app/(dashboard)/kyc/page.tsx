@@ -153,11 +153,9 @@ export default function KYCPage() {
                 : "Sube una foto de tu documento de identidad (cédula, pasaporte o licencia)"}
             </p>
             <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Upload className="mr-2 h-4 w-4" />
-                  {status === "REJECTED" ? "Rechazar documentos" : "Subir documentos"}
-                </Button>
+              <DialogTrigger render={<Button />}>
+                <Upload className="mr-2 h-4 w-4" />
+                {status === "REJECTED" ? "Rechazar documentos" : "Subir documentos"}
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>

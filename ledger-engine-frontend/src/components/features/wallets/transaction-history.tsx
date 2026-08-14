@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import { useMemo, useRef, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TransactionListSkeleton } from "@/components/atoms/skeletons/transaction-list-skeleton";

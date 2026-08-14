@@ -96,9 +96,8 @@ export interface NotificationChannel {
  * Falls back to 60s polling if Ably cannot connect.
  */
 export function createNotificationChannel(
-  userId: string
+  _userId: string
 ): NotificationChannel {
-  const channelName = `user:${userId}:notifications`;
   const callbacks = new Set<NotificationCallback>();
 
   // Reconnection state
@@ -107,7 +106,7 @@ export function createNotificationChannel(
   let pollingTimer: ReturnType<typeof setInterval> | null = null;
   let isConnected = false;
 
-  const notifyCallbacks = (event: NotificationEvent) => {
+  const _notifyCallbacks = (event: NotificationEvent) => {
     callbacks.forEach((cb) => {
       try {
         cb(event);

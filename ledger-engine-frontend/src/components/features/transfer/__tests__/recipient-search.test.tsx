@@ -14,11 +14,13 @@ vi.mock("@/components/ui/avatar", () => ({
     React.createElement("div", { "data-testid": "avatar-fallback", className }, children),
 }));
 
-vi.mock("@/components/ui/input", () => ({
-  Input: React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
+vi.mock("@/components/ui/input", () => {
+  const MockInput = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
     (props, ref) => React.createElement("input", { ...props, ref, "data-testid": "input" })
-  ),
-}));
+  );
+  MockInput.displayName = "Input";
+  return { Input: MockInput };
+});
 
 import { useRecipientSearch } from "@/lib/api/hooks/use-transfers";
 import { RecipientSearch } from "../recipient-search";

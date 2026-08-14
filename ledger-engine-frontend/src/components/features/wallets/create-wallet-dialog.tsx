@@ -50,7 +50,7 @@ interface CreateWalletDialogProps {
  * - Success toast
  * - Query invalidation on success
  */
-export function CreateWalletDialog({ children }: CreateWalletDialogProps) {
+export function CreateWalletDialog({ children: _children }: CreateWalletDialogProps) {
   const [open, setOpen] = useState(false);
   const { data: walletsData } = useWallets();
   const createWallet = useCreateWallet();

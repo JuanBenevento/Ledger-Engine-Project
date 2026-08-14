@@ -7,11 +7,13 @@ vi.mock("@/lib/api/hooks/use-bills", () => ({
   useBillerSearch: vi.fn(),
 }));
 
-vi.mock("@/components/ui/input", () => ({
-  Input: React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
+vi.mock("@/components/ui/input", () => {
+  const MockInput = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
     (props, ref) => React.createElement("input", { ...props, ref, "data-testid": "input" })
-  ),
-}));
+  );
+  MockInput.displayName = "Input";
+  return { Input: MockInput };
+});
 
 import { useBillerSearch } from "@/lib/api/hooks/use-bills";
 import { BillerSearch } from "../biller-search";

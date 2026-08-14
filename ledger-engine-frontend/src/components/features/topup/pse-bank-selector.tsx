@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { SearchIcon, BuildingIcon, CheckIcon, Loader2 } from "lucide-react";
+import { SearchIcon, BuildingIcon, CheckIcon } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 

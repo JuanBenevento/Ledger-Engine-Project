@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 
 // We test the config shape by importing the module and checking its structure.
 // Since next.config.mjs uses plugins, we test the exported config properties.

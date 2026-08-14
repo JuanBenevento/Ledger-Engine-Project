@@ -1,11 +1,8 @@
 "use client";
 
-import { useDevices } from "@/lib/api/hooks/use-security";
 import { TwoFactorSetup } from "@/components/features/security/two-factor-setup";
 import { DeviceList } from "@/components/features/security/device-list";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { ShieldIcon, SmartphoneIcon, ActivityIcon } from "lucide-react";
 
 /**

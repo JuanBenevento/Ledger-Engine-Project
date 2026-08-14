@@ -4,8 +4,7 @@ import { describe, it, expect, vi } from "vitest";
 // which doesn't resolve in vitest/jsdom
 vi.mock("next-intl/navigation", () => ({
   createNavigation: vi.fn(() => ({
-    Link: ({ children, href }: { children: React.ReactNode; href: string }) =>
-      null,
+    Link: () => null,
     redirect: vi.fn(),
     usePathname: vi.fn(() => "/"),
     useRouter: vi.fn(() => ({ replace: vi.fn() })),

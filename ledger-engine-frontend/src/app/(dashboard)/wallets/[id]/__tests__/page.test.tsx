@@ -29,7 +29,7 @@ vi.mock("@/lib/api/hooks/use-wallets", () => ({
 
 // Mock child components
 vi.mock("@/components/features/wallets/transaction-history", () => ({
-  TransactionHistory: ({ transactions, isLoading, hasMore, onLoadMore }: any) =>
+  TransactionHistory: ({ transactions, isLoading, hasMore, _onLoadMore }: any) =>
     React.createElement(
       "div",
       {
@@ -43,10 +43,10 @@ vi.mock("@/components/features/wallets/transaction-history", () => ({
 }));
 
 vi.mock("@/components/features/wallets/deactivate-wallet-dialog", () => ({
-  DeactivateWalletDialog: ({ wallet, balance, children }: any) =>
+  DeactivateWalletDialog: ({ wallet, _balance, children }: any) =>
     React.createElement(
       "div",
-      { "data-testid": "deactivate-wallet-dialog", "data-walletid": wallet?.walletId },
+      { "data-testid": "deactivate-wallet-dialog", "data-walletid": wallet?.wallet_id },
       children
     ),
 }));

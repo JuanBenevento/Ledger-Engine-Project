@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import api from "../client";
 import type { components } from "../types/api";
 
-type KYCStatusResponse = components["schemas"]["KYCStatusResponse"];
 type KYCDocument = components["schemas"]["KYCDocument"];
 
 /**
@@ -56,6 +55,7 @@ export function useSubmitKYC() {
       });
 
       const { data, error } = await api.POST("/api/v1/kyc/submit", {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- FormData is not assignable to generated API body type
         body: formData as any,
         headers: {
           "Content-Type": "multipart/form-data",
@@ -99,6 +99,7 @@ export function useResubmitKYC() {
       });
 
       const { data, error } = await api.POST("/api/v1/kyc/resubmit", {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- FormData is not assignable to generated API body type
         body: formData as any,
         headers: {
           "Content-Type": "multipart/form-data",

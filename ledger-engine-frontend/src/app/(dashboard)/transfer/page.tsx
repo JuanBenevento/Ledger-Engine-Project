@@ -14,7 +14,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { formatCurrency } from "@/hooks/use-currency";
 
 interface Recipient {
   userId: string;
@@ -43,7 +42,7 @@ export default function TransferPage() {
   const { data: walletsData } = useWallets();
   const wallets = walletsData?.wallets ?? [];
 
-  const activeWalletId = sourceWalletId || wallets[0]?.walletId || "";
+  const activeWalletId = sourceWalletId || wallets[0]?.wallet_id || "";
 
   const canSubmit = recipient !== null && amount >= 1000 && activeWalletId !== "";
 
@@ -103,14 +102,14 @@ export default function TransferPage() {
         <Label>Seleccionar billetera de origen</Label>
         <Select
           value={activeWalletId}
-          onValueChange={setSourceWalletId}
+          onValueChange={(v) => setSourceWalletId(v ?? "")}
         >
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Seleccionar billetera de origen" />
           </SelectTrigger>
           <SelectContent>
             {wallets.map((wallet) => (
-              <SelectItem key={wallet.walletId} value={wallet.walletId ?? ""}>
+              <SelectItem key={wallet.wallet_id} value={wallet.wallet_id ?? ""}>
                 {wallet.name}
               </SelectItem>
             ))}

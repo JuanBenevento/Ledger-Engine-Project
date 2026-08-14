@@ -1,8 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
 import { useWallets, useWalletBalance } from "@/lib/api/hooks/use-wallets";
-import { AnimatedNumber, formatCurrency } from "@/hooks/use-currency";
 import { WalletCard } from "@/components/features/wallets/wallet-card";
 import { CreateWalletDialog } from "@/components/features/wallets/create-wallet-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -124,7 +122,7 @@ function WalletGrid({ wallets }: { wallets: Array<{ walletId?: string; name?: st
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {wallets.map((wallet) => (
-        <WalletCardWithBalance key={wallet.walletId} wallet={wallet} />
+        <WalletCardWithBalance key={wallet.wallet_id} wallet={wallet} />
       ))}
     </div>
   );
@@ -139,14 +137,14 @@ function WalletCardWithBalance({
 }: {
   wallet: { walletId?: string; name?: string; status?: string; currency?: string };
 }) {
-  const { data: balanceData } = useWalletBalance(wallet.walletId ?? null);
+  const { data: balanceData } = useWalletBalance(wallet.wallet_id ?? null);
 
   const balance = balanceData?.balance ? parseFloat(balanceData.balance) : 0;
 
   return (
     <WalletCard
       wallet={{
-        walletId: wallet.walletId ?? "",
+        walletId: wallet.wallet_id ?? "",
         name: wallet.name ?? "",
         currency: wallet.currency ?? "COP",
         status: (wallet.status as "ACTIVE" | "INACTIVE" | "FROZEN") ?? "ACTIVE",

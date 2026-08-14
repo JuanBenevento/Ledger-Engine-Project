@@ -77,7 +77,7 @@ describe("TwoFactorSetup", () => {
       "ABC1-DEF2", "GHI3-JKL4", "MNO5-PQR6", "STU7-VWX8", "YZA9-BCD1",
     ];
 
-    vi.mocked(api.POST).mockImplementation(async (url: string, options?: any) => {
+    vi.mocked(api.POST).mockImplementation(async (url: string, _options?: any) => {
       if (url === "/api/v1/security/2fa/enable") {
         return {
           data: {

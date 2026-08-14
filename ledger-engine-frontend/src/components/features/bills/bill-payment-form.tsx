@@ -95,7 +95,7 @@ export function BillPaymentForm({ billerId, walletId }: BillPaymentFormProps) {
               </SelectTrigger>
               <SelectContent>
                 {wallets.map((wallet) => (
-                  <SelectItem key={wallet.walletId} value={wallet.walletId ?? ""}>
+                  <SelectItem key={wallet.wallet_id} value={wallet.wallet_id ?? ""}>
                     {wallet.name}
                   </SelectItem>
                 ))}

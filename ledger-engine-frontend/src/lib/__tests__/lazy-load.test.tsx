@@ -6,7 +6,7 @@ vi.mock("next/dynamic", () => {
   return {
     default: vi.fn((importFn: () => Promise<{ default: React.ComponentType }>, options: Record<string, unknown>) => {
       // Return a component that renders a data attribute indicating it was dynamically loaded
-      const MockDynamic = (props: Record<string, unknown>) => {
+      const MockDynamic = (_props: Record<string, unknown>) => {
         return null;
       };
       MockDynamic.displayName = `Lazy(${options?.loading ? "CustomLoading" : "DefaultLoading"})`;

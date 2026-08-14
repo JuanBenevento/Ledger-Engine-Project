@@ -5,7 +5,6 @@ import { useWallets } from "@/lib/api/hooks/use-wallets";
 import { BillerSearch } from "@/components/features/bills/biller-search";
 import { BillFavoritesList } from "@/components/features/bills/bill-favorites-list";
 import { BillPaymentForm } from "@/components/features/bills/bill-payment-form";
-import type { Biller } from "@/lib/api/hooks/use-bills";
 
 /**
  * BillPaymentPage.
@@ -17,11 +16,11 @@ import type { Biller } from "@/lib/api/hooks/use-bills";
  * - Uses useState for selected biller
  */
 export default function BillPaymentPage() {
-  const [selectedBiller, setSelectedBiller] = useState<Biller | null>(null);
+  const [selectedBillerId, setSelectedBillerId] = useState<string | null>(null);
 
   const { data: walletsData } = useWallets();
   const wallets = walletsData?.wallets ?? [];
-  const activeWalletId = wallets[0]?.walletId || "";
+  const activeWalletId = wallets[0]?.wallet_id || "";
 
   return (
     <div className="space-y-6">
@@ -33,15 +32,15 @@ export default function BillPaymentPage() {
       </div>
 
       {/* Favorites List */}
-      <BillFavoritesList onSelect={setSelectedBiller} />
+      <BillFavoritesList onSelect={setSelectedBillerId} />
 
       {/* Biller Search */}
-      <BillerSearch onSelect={setSelectedBiller} />
+      <BillerSearch onSelect={(biller) => setSelectedBillerId(biller.id)} />
 
       {/* Payment Form (shown after biller selection) */}
-      {selectedBiller && activeWalletId && (
+      {selectedBillerId && activeWalletId && (
         <BillPaymentForm
-          billerId={selectedBiller.id}
+          billerId={selectedBillerId}
           walletId={activeWalletId}
         />
       )}

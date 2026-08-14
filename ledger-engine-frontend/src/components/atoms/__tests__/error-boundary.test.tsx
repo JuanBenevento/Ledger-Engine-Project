@@ -60,7 +60,7 @@ describe("ErrorBoundary", () => {
       return <div data-testid="child">Child content</div>;
     }
 
-    const { rerender } = render(
+    const { _rerender } = render(
       <ErrorBoundary key="boundary-1">
         <ControlledThrowingComponent />
       </ErrorBoundary>

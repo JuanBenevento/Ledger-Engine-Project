@@ -54,7 +54,6 @@ export default function QRPayPage() {
     const file = e.target.files?.[0];
     if (file) {
       // Simulate QR read from image
-      const url = URL.createObjectURL(file);
       // In real app, would decode QR from image
       router.push(`/qr/confirm?codeId=uploaded-${file.name}`);
     }

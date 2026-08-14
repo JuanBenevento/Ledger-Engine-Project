@@ -26,14 +26,6 @@ const CHANNEL_LABELS = {
 const SECURITY_ALERT_TOOLTIP =
   "Las alertas de seguridad no se pueden desactivar";
 
-interface PreferenceToggle {
-  type: string;
-  channel: "push" | "email" | "sms";
-  enabled: boolean;
-  disabled: boolean;
-  tooltip?: string;
-}
-
 /**
  * NotificationPreferencesPage
  *
@@ -69,7 +61,7 @@ export default function NotificationPreferencesPage() {
 
   const handleSave = async () => {
     try {
-      await updatePreferences.mutateAsync({ preferences: localPreferences });
+      await updatePreferences.mutateAsync(localPreferences);
       toast.success("Preferencias guardadas");
     } catch {
       toast.error("Error", { description: "No se pudieron guardar las preferencias" });
