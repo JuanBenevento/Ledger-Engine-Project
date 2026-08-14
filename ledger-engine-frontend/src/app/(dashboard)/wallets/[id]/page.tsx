@@ -58,9 +58,17 @@ export default function WalletDetailPage() {
   const { data: balanceData, isLoading: isLoadingBalance } = useWalletBalance(walletId);
   const { data: transactionsData, isLoading: isLoadingTransactions } = useWalletTransactions(walletId);
 
-  const wallet = walletsData?.wallets?.find((w) => w.wallet_id === walletId);
+  const walletRaw = walletsData?.wallets?.find((w) => w.wallet_id === walletId);
+  const wallet: Wallet | undefined = walletRaw
+    ? {
+        walletId: walletRaw.wallet_id ?? "",
+        name: walletRaw.name ?? "",
+        currency: walletRaw.currency ?? "COP",
+        status: (walletRaw.status as WalletStatus) ?? "ACTIVE",
+      }
+    : undefined;
   const balance = balanceData?.balance ? parseFloat(balanceData.balance) : 0;
-  const status = wallet?.status as WalletStatus || "ACTIVE";
+  const status = wallet?.status || "ACTIVE";
   const statusConfig_ = statusConfig[status] || statusConfig.ACTIVE;
 
   // Loading state
@@ -196,7 +204,7 @@ function RenameWalletDialog({
 
     try {
       await renameWallet.mutateAsync({
-        walletId: wallet.wallet_id,
+        walletId: wallet.walletId,
         name: name.trim(),
       });
       onOpenChange(false);

@@ -50,7 +50,7 @@ export function DeactivateWalletDialog({
     if (hasBalance) return;
 
     try {
-      await deactivateWallet.mutateAsync(wallet.wallet_id);
+      await deactivateWallet.mutateAsync(wallet.walletId);
       setOpen(false);
     } catch {
       // Error handled by useDeactivateWallet hook

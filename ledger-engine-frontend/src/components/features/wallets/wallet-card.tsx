@@ -42,7 +42,7 @@ export function WalletCard({ wallet, balance, className }: WalletCardProps) {
   const status = statusConfig[wallet.status] || statusConfig.ACTIVE;
 
   const handleClick = () => {
-    router.push(`/wallets/${wallet.wallet_id}`);
+    router.push(`/wallets/${wallet.walletId}`);
   };
 
   return (
