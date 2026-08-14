@@ -26,7 +26,7 @@ public class PseWebhookController {
 
     private final PseTopUpUseCase pseTopUpUseCase;
 
-    @Value("${webhook.hmac.secret:default-secret-key-change-in-production}")
+    @Value("${WEBHOOK_HMAC_SECRET}")
     private String hmacSecret;
 
     @Operation(

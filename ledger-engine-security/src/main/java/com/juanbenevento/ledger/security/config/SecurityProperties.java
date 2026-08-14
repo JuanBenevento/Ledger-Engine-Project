@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 public class SecurityProperties {
     private Jwt jwt = new Jwt();
     private Cors cors = new Cors();
-    private String encryptionKey = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+    private String encryptionKey;
 
     public Jwt getJwt() {
         return jwt;

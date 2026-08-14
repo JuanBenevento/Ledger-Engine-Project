@@ -24,7 +24,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(PseWebhookController.class)
-@TestPropertySource(properties = "webhook.hmac.secret=test-secret-key-for-hmac")
+@TestPropertySource(properties = "WEBHOOK_HMAC_SECRET=test-secret-key-for-hmac")
 class PseWebhookControllerTest {
 
     @Autowired

@@ -102,6 +102,10 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <argLine>-XX:+EnableDynamicAgentLoading</argLine>
+                    <environmentVariables>
+                        <LEDGER_ENCRYPTION_KEY>0000000000000000000000000000000000000000000000000000000000000000</LEDGER_ENCRYPTION_KEY>
+                        <WEBHOOK_HMAC_SECRET>test-secret-key-for-hmac</WEBHOOK_HMAC_SECRET>
+                    </environmentVariables>
                 </configuration>
             </plugin>
         </plugins>
