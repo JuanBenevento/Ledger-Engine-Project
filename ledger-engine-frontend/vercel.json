@@ -42,14 +42,5 @@
     }
   ],
 
-  "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "/api/:path*"
-    }
-  ],
-
-  "env": {
-    "NEXT_PUBLIC_APP_ENV": "@app-env"
-  }
+  "rewrites": []
 }
