@@ -113,7 +113,7 @@ Go to **Settings > Database > Connection pooling** and note:
 
 **Connection string format for Keycloak:**
 ```
-jdbc:postgresql://aws-1-us-west-2.pooler.supabase.com:6543/postgres
+jdbc:postgresql://aws-1-us-west-2.pooler.supabase.com:6543/postgres?prepareThreshold=0&reWriteBatchedInserts=true
 ```
 
 ---
@@ -230,8 +230,8 @@ We use **Cloud-IAM** for managed Keycloak instead of self-hosting on Render. Clo
 
 ```env
 SPRING_PROFILES_ACTIVE=production
-SPRING_DATASOURCE_URL=jdbc:postgresql://db.<PROD-PROJECT-ID>.supabase.co:5432/postgres
-SPRING_DATASOURCE_USERNAME=postgres
+SPRING_DATASOURCE_URL=jdbc:postgresql://aws-1-us-west-2.pooler.supabase.com:6543/postgres?prepareThreshold=0&reWriteBatchedInserts=true
+SPRING_DATASOURCE_USERNAME=postgres.<PROD-PROJECT-ID>
 SPRING_DATASOURCE_PASSWORD=<PROD-SUPABASE-PASSWORD>
 SPRING_DATA_REDIS_HOST=redis-xxxxx.upstash.io
 SPRING_DATA_REDIS_PORT=6379
@@ -248,6 +248,8 @@ MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS=when_authorized
 LOGGING_LEVEL_COM_JUANBENEVENTO_LEDGER=INFO
 LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY=WARN
 JAVA_OPTS=-Xms256m -Xmx512m
+LEDGER_ENCRYPTION_KEY=<YOUR-256-BIT-HEX-ENCRYPTION-KEY>
+WEBHOOK_HMAC_SECRET=<YOUR-WEBHOOK-HMAC-SECRET>
 ```
 
 5. Note the URL: `https://ledger-engine-api.onrender.com`
