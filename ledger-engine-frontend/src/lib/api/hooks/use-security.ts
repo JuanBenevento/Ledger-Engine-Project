@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import api from "../client";
+import { untypedApi } from "../client";
 
 type TwoFAEnableResponse = {
   secret: string;
@@ -33,7 +33,7 @@ type Device = {
 export function useEnable2FA() {
   return useMutation({
     mutationFn: async (): Promise<TwoFAEnableResponse> => {
-      const { data, error } = await api.POST("/api/v1/security/2fa/enable");
+      const { data, error } = await untypedApi.POST("/api/v1/security/2fa/enable", {});
 
       if (error) {
         throw error;
@@ -54,7 +54,7 @@ export function useVerify2FA() {
 
   return useMutation({
     mutationFn: async (code: string): Promise<TwoFAVerifyResponse> => {
-      const { data, error } = await api.POST("/api/v1/security/2fa/verify", {
+      const { data, error } = await untypedApi.POST("/api/v1/security/2fa/verify", {
         body: { code },
       });
 
@@ -88,7 +88,7 @@ export function useDisable2FA() {
 
   return useMutation({
     mutationFn: async (code: string) => {
-      const { data, error } = await api.POST("/api/v1/security/2fa/disable", {
+      const { data, error } = await untypedApi.POST("/api/v1/security/2fa/disable", {
         body: { code },
       });
 
@@ -121,7 +121,7 @@ export function useDevices() {
   return useQuery({
     queryKey: ["security", "devices"],
     queryFn: async () => {
-      const { data, error } = await api.GET("/api/v1/security/devices");
+      const { data, error } = await untypedApi.GET("/api/v1/security/devices", {});
 
       if (error) {
         throw error;
@@ -143,7 +143,7 @@ export function useRevokeDevice() {
 
   return useMutation({
     mutationFn: async (deviceId: string) => {
-      const { data, error } = await api.DELETE(
+      const { data, error } = await untypedApi.DELETE(
         "/api/v1/security/devices/{deviceId}",
         {
           params: { path: { deviceId } },

@@ -1,6 +1,7 @@
 "use client";
 
 import { useWallets, useWalletBalance } from "@/lib/api/hooks/use-wallets";
+import type { WalletResponse } from "@/lib/api/hooks/use-wallets";
 import { WalletCard } from "@/components/features/wallets/wallet-card";
 import { CreateWalletDialog } from "@/components/features/wallets/create-wallet-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -88,7 +89,7 @@ export default function DashboardPage() {
  * Total balance hero card.
  * Shows sum of all active wallet balances.
  */
-function TotalBalanceHero({ wallets }: { wallets: Array<{ walletId?: string; status?: string }> }) {
+function TotalBalanceHero({ wallets }: { wallets: WalletResponse[] }) {
   const activeWallets = wallets.filter((w) => w.status === "ACTIVE");
 
   return (
@@ -118,7 +119,7 @@ function TotalBalanceHero({ wallets }: { wallets: Array<{ walletId?: string; sta
  * Wallet grid component.
  * Displays WalletCards in a responsive grid.
  */
-function WalletGrid({ wallets }: { wallets: Array<{ walletId?: string; name?: string; status?: string; currency?: string }> }) {
+function WalletGrid({ wallets }: { wallets: WalletResponse[] }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {wallets.map((wallet) => (
@@ -135,7 +136,7 @@ function WalletGrid({ wallets }: { wallets: Array<{ walletId?: string; name?: st
 function WalletCardWithBalance({
   wallet,
 }: {
-  wallet: { walletId?: string; name?: string; status?: string; currency?: string };
+  wallet: WalletResponse;
 }) {
   const { data: balanceData } = useWalletBalance(wallet.wallet_id ?? null);
 

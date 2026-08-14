@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import api from "../client";
+import { untypedApi } from "../client";
 
 /** Notification preference type for a specific notification type and channel. */
 export interface NotificationPreference {
@@ -21,8 +21,9 @@ export function useNotificationPreferences() {
   return useQuery({
     queryKey: ["notification-preferences"],
     queryFn: async () => {
-      const { data, error } = await api.GET(
-        "/api/v1/notifications/preferences"
+      const { data, error } = await untypedApi.GET(
+        "/api/v1/notifications/preferences",
+        {}
       );
 
       if (error) {
@@ -47,7 +48,7 @@ export function useUpdateNotificationPreferences() {
 
   return useMutation({
     mutationFn: async (preferences: NotificationPreference[]) => {
-      const { data, error } = await api.PUT(
+      const { data, error } = await untypedApi.PUT(
         "/api/v1/notifications/preferences",
         {
           body: { preferences },

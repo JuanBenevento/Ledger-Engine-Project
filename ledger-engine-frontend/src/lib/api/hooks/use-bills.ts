@@ -2,7 +2,8 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import api from "../client";
+import api, { untypedApi } from "../client";
+import { useAuth } from "@/lib/auth";
 
 /**
  * Hook to fetch favorite billers.
@@ -14,13 +15,20 @@ export function useFavoriteBillers() {
   return useQuery({
     queryKey: ["bill-favorites"],
     queryFn: async () => {
-      const { data, error } = await api.GET("/api/v1/bills/favorites");
+      const { data, error } = await api.GET("/api/v1/bills/favorites", {});
 
       if (error) {
         throw error;
       }
 
-      return (data ?? { favorites: [] }) as { favorites: BillFavorite[] };
+      const favorites = (data ?? []).map((biller) => ({
+        id: biller.id ?? "",
+        billerId: biller.id ?? "",
+        billerName: biller.name ?? "",
+        category: biller.category ?? "",
+      })) as BillFavorite[];
+
+      return { favorites };
     },
     staleTime: 60_000,
   });
@@ -64,7 +72,7 @@ export function useBillerSearch(query: string) {
     queryFn: async () => {
       if (query.length < 2) return null;
 
-      const { data, error } = await api.GET("/api/v1/bills/search", {
+      const { data, error } = await untypedApi.GET("/api/v1/bills/search", {
         params: { query: { q: query } },
       });
 
@@ -88,6 +96,7 @@ export function useBillerSearch(query: string) {
  */
 export function usePayBill() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   return useMutation({
     mutationFn: async ({
@@ -101,8 +110,11 @@ export function usePayBill() {
       amount: number;
       reference: string;
     }) => {
+      if (!user?.id) throw new Error("Usuario no autenticado");
+
       const { data, error } = await api.POST("/api/v1/bills/pay", {
         body: {
+          userId: user.id,
           billerId,
           walletId,
           amount: String(amount),

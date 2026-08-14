@@ -27,7 +27,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Wallet, WalletStatus } from "@/types/wallet";
+import { Wallet, WalletStatus, Transaction } from "@/types/wallet";
 import { Loader2, ArrowLeftIcon, MoreVerticalIcon, PencilIcon, TrashIcon, WalletIcon } from "lucide-react";
 import Link from "next/link";
 

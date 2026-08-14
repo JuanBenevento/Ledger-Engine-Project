@@ -2,10 +2,15 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import api from "../client";
-import type { components } from "../types/api";
-
-type TransferResponse = components["schemas"]["TransferResponse"];
+import api, { untypedApi } from "../client";
+type TransferResponse = {
+  transferId: string;
+  status: string;
+  amount: string;
+  currency: string;
+  description?: string;
+  createdAt: string;
+};
 
 /**
  * Hook to search for a recipient by email or phone.
@@ -19,7 +24,7 @@ export function useRecipientSearch(query: string) {
     queryFn: async () => {
       if (query.length < 3) return null;
 
-      const { data, error } = await api.GET("/api/v1/p2p/recipients/search", {
+      const { data, error } = await untypedApi.GET("/api/v1/p2p/recipients/search", {
         params: { query: { q: query } },
       });
 
@@ -56,7 +61,7 @@ export function useTransfer() {
       walletId: string;
       description?: string;
     }) => {
-      const { data, error } = await api.POST("/api/v1/p2p/transfers", {
+      const { data, error } = await untypedApi.POST("/api/v1/p2p/transfers", {
         body: {
           recipientEmail,
           amount,
@@ -103,7 +108,7 @@ export function useTransferHistory(
     queryFn: async () => {
       if (!walletId) return null;
 
-      const { data, error } = await api.GET("/api/v1/p2p/transfers", {
+      const { data, error } = await untypedApi.GET("/api/v1/p2p/transfers", {
         params: { query: { page, size } },
       });
 

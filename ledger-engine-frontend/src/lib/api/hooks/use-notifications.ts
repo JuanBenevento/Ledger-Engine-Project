@@ -2,7 +2,8 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import api from "../client";
+import api, { untypedApi } from "../client";
+import { useAuth } from "@/lib/auth";
 import type { components } from "../types/api";
 
 type NotificationResponse = components["schemas"]["NotificationResponse"];
@@ -30,22 +31,30 @@ export const NOTIFICATION_TYPE_LABELS: Record<string, string> = {
  * Paginated (50 per page), with unreadCount in response.
  */
 export function useNotifications(page: number = 0, size: number = 50) {
+  const { user } = useAuth();
+
   return useQuery({
     queryKey: ["notifications", page, size],
     queryFn: async () => {
+      if (!user?.id) throw new Error("Usuario no autenticado");
+
       const { data, error } = await api.GET("/api/v1/notifications", {
-        params: { query: { page, size } },
+        params: {
+          header: { "X-User-Id": user.id },
+        },
       });
 
       if (error) {
         throw error;
       }
 
-      return (data ?? { content: [], unreadCount: 0 }) as {
-        content: NotificationResponse[];
-        unreadCount: number;
+      const notifications = (data ?? []) as NotificationResponse[];
+      return {
+        content: notifications,
+        unreadCount: notifications.filter((n) => !n.is_read).length,
       };
     },
+    enabled: !!user?.id,
     staleTime: 10_000, // 10 seconds
     refetchOnWindowFocus: true,
   });
@@ -57,19 +66,27 @@ export function useNotifications(page: number = 0, size: number = 50) {
  * Used by NotificationBell for lightweight badge updates.
  */
 export function useUnreadCount() {
+  const { user } = useAuth();
+
   return useQuery({
     queryKey: ["notifications", "unread-count"],
     queryFn: async () => {
+      if (!user?.id) throw new Error("Usuario no autenticado");
+
       const { data, error } = await api.GET("/api/v1/notifications", {
-        params: { query: { page: 0, size: 0 } },
+        params: {
+          header: { "X-User-Id": user.id },
+        },
       });
 
       if (error) {
         throw error;
       }
 
-      return (data ?? { unreadCount: 0 }) as { unreadCount: number };
+      const notifications = (data ?? []) as NotificationResponse[];
+      return { unreadCount: notifications.filter((n) => !n.is_read).length };
     },
+    enabled: !!user?.id,
     staleTime: 10_000,
     refetchOnWindowFocus: true,
   });
@@ -83,13 +100,19 @@ export function useUnreadCount() {
  */
 export function useMarkNotificationRead() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   return useMutation({
     mutationFn: async (notificationId: string) => {
+      if (!user?.id) throw new Error("Usuario no autenticado");
+
       const { data, error } = await api.PUT(
         "/api/v1/notifications/{id}/read",
         {
-          params: { path: { id: notificationId } },
+          params: {
+            path: { id: notificationId },
+            header: { "X-User-Id": user.id },
+          },
         }
       );
 
@@ -143,8 +166,9 @@ export function useMarkAllRead() {
 
   return useMutation({
     mutationFn: async () => {
-      const { data, error } = await api.POST(
-        "/api/v1/notifications/read-all"
+      const { data, error } = await untypedApi.POST(
+        "/api/v1/notifications/read-all",
+        {}
       );
 
       if (error) {

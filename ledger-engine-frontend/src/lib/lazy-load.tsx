@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import type { DynamicOptionsLoadingProps } from "next/dynamic";
 import type { ComponentType } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -25,7 +26,7 @@ function DefaultLoadingSkeleton() {
  */
 export interface LazyLoadOptions {
   /** Custom loading component (default: DefaultLoadingSkeleton) */
-  loading?: ComponentType;
+  loading?: (loadingProps: DynamicOptionsLoadingProps) => React.ReactElement | null;
   /** Whether to use SSR for this component (default: false) */
   ssr?: boolean;
 }

@@ -19,6 +19,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useCreateWallet, useWallets } from "@/lib/api/hooks/use-wallets";
+import { useAuth } from "@/lib/auth";
 
 /**
  * Zod schema for wallet creation form.
@@ -53,6 +54,7 @@ interface CreateWalletDialogProps {
 export function CreateWalletDialog({ children: _children }: CreateWalletDialogProps) {
   const [open, setOpen] = useState(false);
   const { data: walletsData } = useWallets();
+  const { user } = useAuth();
   const createWallet = useCreateWallet();
 
   const walletCount = walletsData?.wallets?.length ?? 0;
@@ -71,10 +73,11 @@ export function CreateWalletDialog({ children: _children }: CreateWalletDialogPr
   });
 
   const onSubmit = async (data: CreateWalletFormData) => {
-    if (isAtLimit) return;
+    if (isAtLimit || !user?.id) return;
 
     try {
       await createWallet.mutateAsync({
+        userId: user.id,
         name: data.name,
         currency: "COP",
       });

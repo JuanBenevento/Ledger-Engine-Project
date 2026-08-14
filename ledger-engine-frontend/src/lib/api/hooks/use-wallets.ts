@@ -2,10 +2,10 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import api from "../client";
+import api, { untypedApi } from "../client";
 import type { components } from "../types/api";
 
-type WalletResponse = components["schemas"]["WalletResponse"];
+export type WalletResponse = components["schemas"]["WalletResponse"];
 type BalanceResponse = components["schemas"]["BalanceResponse"];
 type CreateWalletRequest = components["schemas"]["CreateWalletRequest"];
 
@@ -19,7 +19,7 @@ export function useWallets() {
   return useQuery({
     queryKey: ["wallets"],
     queryFn: async () => {
-      const { data, error } = await api.GET("/api/v1/wallets");
+      const { data, error } = await untypedApi.GET("/api/v1/wallets", {});
 
       if (error) {
         throw error;
@@ -118,7 +118,7 @@ export function useRenameWallet() {
       walletId: string;
       name: string;
     }): Promise<WalletResponse> => {
-      const { data: response, error } = await api.PATCH(
+      const { data: response, error } = await untypedApi.PATCH(
         "/api/v1/wallets/{walletId}",
         {
           params: { path: { walletId } },
@@ -157,7 +157,7 @@ export function useDeactivateWallet() {
 
   return useMutation({
     mutationFn: async (walletId: string) => {
-      const { data, error } = await api.POST(
+      const { data, error } = await untypedApi.POST(
         "/api/v1/wallets/{walletId}/deactivate",
         {
           params: { path: { walletId } },
@@ -206,7 +206,7 @@ export function useWalletTransactions(
     queryFn: async () => {
       if (!walletId) return null;
 
-      const { data, error } = await api.GET(
+      const { data, error } = await untypedApi.GET(
         "/api/v1/wallets/{walletId}/transactions",
         {
           params: {

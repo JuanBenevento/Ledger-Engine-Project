@@ -88,7 +88,7 @@ export function BillPaymentForm({ billerId, walletId }: BillPaymentFormProps) {
             <Label>Seleccionar billetera</Label>
             <Select
               value={selectedWalletId}
-              onValueChange={setSelectedWalletId}
+              onValueChange={(value) => setSelectedWalletId(value ?? "")}
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Seleccionar billetera" />

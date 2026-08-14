@@ -2,10 +2,14 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import api from "../client";
-import type { components } from "../types/api";
-
-type KYCDocument = components["schemas"]["KYCDocument"];
+import api, { untypedApi } from "../client";
+interface KYCDocument {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+}
 
 /**
  * Hook to fetch KYC status.
@@ -17,7 +21,7 @@ export function useKYCStatus() {
   return useQuery({
     queryKey: ["kyc", "status"],
     queryFn: async () => {
-      const { data, error } = await api.GET("/api/v1/kyc/status");
+      const { data, error } = await untypedApi.GET("/api/v1/kyc/status", {});
 
       if (error) {
         throw error;
@@ -98,7 +102,7 @@ export function useResubmitKYC() {
         formData.append("documents", doc);
       });
 
-      const { data, error } = await api.POST("/api/v1/kyc/resubmit", {
+      const { data, error } = await untypedApi.POST("/api/v1/kyc/resubmit", {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- FormData is not assignable to generated API body type
         body: formData as any,
         headers: {

@@ -59,7 +59,13 @@ export function DeactivateWalletDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={children ?? <Button variant="destructive" size="sm" disabled={hasBalance}>Desactivar</Button>} />
+      <DialogTrigger>
+        {children ?? (
+          <Button variant="destructive" size="sm" disabled={hasBalance}>
+            Desactivar
+          </Button>
+        )}
+      </DialogTrigger>
 
       <DialogContent>
         <DialogHeader>
