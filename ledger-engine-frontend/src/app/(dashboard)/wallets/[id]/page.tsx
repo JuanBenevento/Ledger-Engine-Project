@@ -8,7 +8,7 @@ import { TransactionHistory } from "@/components/features/wallets/transaction-hi
 import { DeactivateWalletDialog } from "@/components/features/wallets/deactivate-wallet-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -72,12 +72,10 @@ export default function WalletDetailPage() {
   if (!wallet) {
     return (
       <div className="space-y-6">
-        <Button variant="ghost" asChild>
-          <Link href="/wallets">
-            <ArrowLeftIcon className="mr-2 h-4 w-4" />
-            Volver
-          </Link>
-        </Button>
+        <Link href="/wallets" className={buttonVariants({ variant: "ghost" })}>
+          <ArrowLeftIcon className="mr-2 h-4 w-4" />
+          Volver
+        </Link>
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <WalletIcon className="h-12 w-12 text-muted-foreground mb-4" />
@@ -93,12 +91,10 @@ export default function WalletDetailPage() {
   return (
     <div className="space-y-6">
       {/* Back Button */}
-      <Button variant="ghost" asChild>
-        <Link href="/wallets">
-          <ArrowLeftIcon className="mr-2 h-4 w-4" />
-          Volver
-        </Link>
-      </Button>
+      <Link href="/wallets" className={buttonVariants({ variant: "ghost" })}>
+        <ArrowLeftIcon className="mr-2 h-4 w-4" />
+        Volver
+      </Link>
 
       {/* Balance Hero */}
       <Card className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
